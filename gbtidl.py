@@ -179,6 +179,16 @@ class GBTIDL(object):
         """ print the long or short __docstring__
         """
 
+    def range(self, b, e, s=None):
+        """ emulate the more human range often used in IDL
+        b:  begin/first
+        e:  end/last
+        s:  step/increment
+        """
+        if s == None:
+            return list(range(b,e+1))
+        return list(range(b,e+s,s))
+
 # example from manual how IDL and OY compare
 def myscale(g, factor=1.0):
     """
