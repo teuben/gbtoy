@@ -1,0 +1,188 @@
+GBTOY is a toy model for GBTIDL.
+
+In this version we use pyspeckit behind the scenes, since it knows how
+to hande SDFITS files. Currently only nodding reduction is supported,
+no frequency switching yet. I also don't know if nodding is the same
+as position switching???  The GBTIDL users guide has an example for
+both, so perhaps different?
+
+In GBTILD I read 3 getters after the common 'filein' command
+   getfs
+   getnod
+   getps
+
+The goal in this version is to give an idea how pythonic GBTIDL would
+look and feel and get user feedback before we continue.
+GBTOY could become GBTPY if we're doing it more pythonic, and not letting
+it mirror GBTIDL as much as GBTOY does.
+Another horrible idea is to model the interface after casa, wiht it's
+global namespace, the "tget", "inp", "go" commands, etc.
+
+This means we have 3 possible ways to implement pythonic-GBTIDL
+
+
+In python a global function such as "filein" is not a good idea,
+because it's easy to imagine that this function name will be a python
+builtin command, or come from another package (although packages
+should not do this).
+
+
+So the typical way in python would be something like
+
+   import gbtidl as g
+
+after which you could have
+
+   g.filein()
+
+however, in my current model you would do this:
+
+   import gbtidl
+
+   g = gbtidl.GBTIDL(ndc=32)
+
+where I've created a "g" object with 32 DC's instead of the default 16.
+
+You would then have access to these DC's as
+   g.s[0]  (the PDC)
+and
+   g.c[0]
+   
+all the way to
+
+   g.s[31]
+
+if you want to know what 'ndc' was used,
+
+   print("# DC's = %d" % len(g.s))
+
+This way you can also see how to use multiple g's
+
+   g1 = gbtidl.GBTIDL(ndc=10)
+   g2 = gbtidl.GBTIDL()
+
+and have memory optimized parallel sessions.
+
+
+  !gc.xxx   ->   g.gc.xxx
+  !g.s[0]   ->   g.s[0]
+
+Taking the 3 examples from the Users' Guide as listed in Appendix F,
+they would read as follows:
+
+Example 1:   Position Switching
+-------------------------------
+
+g.filein('ngc5291.fits')
+g.summary()
+
+for i=g.range(51,57,2):
+    g.getps(i, plnum=0)
+    g.accum()
+for i=g.range(51,57,2):
+    g.getps(i, plnum=1)
+    g.accum()
+g.ave()
+
+g.chan()
+g.nregion,[3300,14800,17900,31000])
+g.nfit(3)
+g.sety(0.2, 0.5)
+g.bshape()
+g.baseline()
+g.unzoom()
+
+g.hanning(decimate=True)
+g.bdrop(2500)
+g.edrop(2500)
+g.velo()
+g.stats(2000, 3000)
+g.stats(3900, 4800)
+g.boxcar(8)
+
+
+Example 2:
+----------
+
+Example 3: Nodding 
+------------------
+
+g.filein('I1481.fits')
+g.getnod(182, plnum=0)
+g.accum()
+g.getnod(182, plnum=1)
+g.accum()
+g.getnod(184, plnum=0)
+g.accum()
+g.getnod(184, plnum=1)
+g.accum()
+
+g.ave()
+g.setregion()
+g.nfit(3)
+g.baseline()
+
+or the alternative:
+
+g.filein('IC1481.fits')
+g.summary()
+
+
+g.emptystack()
+g.sclear()
+g.addstack(182, 188, 2)
+g.tellstack()
+
+
+
+g.freeze()
+for i in range(g.acount):
+  getnod( g.astack(i), plnum=0, units='Jy', tsys=60
+  g.accum()
+  g.copy(0, i*2+2)
+  g.getnod( g.astack(i), plnum=1, units='Jy', tsys=60)
+  g.accum()
+  g.copy(0, i*2+3)
+g.unfreeze()
+g.ave()
+
+
+g.setregion()
+g.nfit(3)
+g.bshape()
+g.baseline()
+
+g.hanning(decimate=False)
+g.fileout('saved.fits')
+g.keep()
+
+g.copy(2, 0)
+g.baseline()
+g.show()
+g.copy(0, 2)
+g.freeze()
+for i=g.range(3,9):
+  g.copy(i, 0)
+  g.baseline()
+  g.bias( float(i-2)*0.2)
+  g.copy(0, i)
+g.show(2)
+g.unfreeze()
+for i=g.range(3,9):
+  g.oshow(i, color='red')
+
+
+# example from manual how IDL and OY compare
+def myscale(g, factor=1.0):
+    """
+    pro myscale,factor
+      tmp_data = getdata()
+      tmp_data = tmp_data * factor
+      setdata, tmp_data
+      if !g.frozen eq 0 then show
+    end
+    """
+    g.setdata(factor * g.getdata())
+    # if !g.frozen eq 0 then show
+
+
