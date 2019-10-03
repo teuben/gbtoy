@@ -2,6 +2,7 @@
 #
 #
 #  GBTIDL - emulator of some examples implemented in python
+#
 #  GBTOY is the kiddy version
 #  GBTPY is when it's really python?
 # 
@@ -60,7 +61,7 @@ class GBTIDL(object):
 
         self.help()
 
-    def help(help, concept=None):
+    def help(self, concept=None):
         
         _help = """
         --------------------------------------------------------------------
@@ -68,7 +69,7 @@ class GBTIDL(object):
         
                    http://github.edu/teuben/gbtoy
 
-        For help with a GBTIDL routine from the command line, use
+        For help with a GBTOY routine from the command line, use
              the procedure 'usage'.  For example:
 
         usage('show')          ; gives the syntax of the procedure 'show'
