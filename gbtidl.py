@@ -13,13 +13,13 @@
 #  !g.s[0]   ->   g.s[0]
 
 import numpy as np
-
+import pyspeckit 
+from pyspeckit.spectrum.readers import gbt
 
 # helper class for the !gc constants 
 
 class GC(object):
     def __init__(self):
-        print("GC")
         self.light_speed = np.double(2.99792458e8)   # m/s
         self.light_c     = np.double(2.99792458e5)   # km/s
 
@@ -48,15 +48,19 @@ class GBTIDL(object):
     
     """
     def __init__(self, filein=None, dirin=None, ndc=16):
-        self.filein = None     # optional SDFITS file
-        self.dirin  = None     # optional directory with related SDFITS files
-        self.mode   = 0        # none (0) or file (1) or dir (2)
-        self.s      = list(range(ndc))
-        self.c      = list(range(ndc))
+        self._filein  = filein          # optional SDFITS file
+        self._dirin   = dirin           # optional directory with related SDFITS files
+        self.mode     = 0               # none (0) or file (1) or dir (2)
+        self.s        = list(range(ndc))
+        self.c        = list(range(ndc))
         for i in range(ndc):
             self.s[i] = DataContainer()
             self.c[i] = DataContainer()
-        self.gc = GC()
+            
+        self._session = None             # the latest session loaded with filein()
+        self._targets = None             # only if one target, for now
+        
+        self.gc       = GC()
         
 
         self.help()
@@ -79,24 +83,41 @@ class GBTIDL(object):
         print(_help)
         
 
-    def filein(self, filein=None):
-        """ if no filein given, should pop up filebrowser
+    def filein(self, filein, verbose=False):
+        """ if no filein given, should pop up a GUI to select, but this is not supported yet
         """
-        print("GBTIDL> ")
+        self._filein = filein
+        self.mode    = 1
+
+        self._session = gbt.GBTSession(self._filein)
+        if verbose: print(self._session)
+        nsrc = len(self._session.targets.keys())
+        if nsrc == 1:
+            src = list(self._session.targets.keys())[0]
+            self._targets = self._session.load_target(src)
+            print("Target: %s" % src)
+        else:
+            print('%d : too many targets for me now, not stored.' % nsrc)
+        return self._session
 
     def dirin(self, dirin=None):
         """ if no dirin given, should pop up filebrowser
         """
-        print("GBTIDL> ")
+        self._dirin = dirin        
+        self.mode   = 2
+        print("dirin not supported yet, use filein")
         
     def summary(self, logfile=None):
-        print("GBTIDL> ")
         """
         Scan Source  Vel  Proc Seq  RestF nIF nInt nFd  Az  El
         -------------------------------------------------------------------------------
         79  W3OH  -44.0  Track 0 1.667 2 6 1 379.2 16.1
         80  W3OH  -44.0  Track 0 1.667 2 6 1 379.4 16.2
         """
+        if self._filein == None:
+            print("no filein set")
+        print("FILEIN: %s" % self._filein)
+        print(self._session)
 
     def header(self, buffer=0):
         print("GBTIDL> ")
@@ -155,10 +176,10 @@ class GBTIDL(object):
         print("GBTIDL> ")
 
     def online(self):
-        print("GBTIDL> ")
+        print("online mode not supported yet")
         
     def offline(self):
-        print("GBTIDL> ")
+        print("offline mode is the only supported mode")
         
     def copy(self, r1, r2):
         print("GBTIDL> ")
