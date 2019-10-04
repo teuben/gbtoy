@@ -1,31 +1,41 @@
 GBTOY is a toy model for GBTIDL.
 
-In this version we use pyspeckit behind the scenes, since it knows how
-to hande SDFITS files. Currently only nodding reduction is supported,
-no frequency switching yet. I also don't know if nodding is the same
-as position switching???  The GBTIDL users guide has an example for
-both, so perhaps different?
+In this version we use pyspeckit (+astropy) behind the scenes, since
+it knows how to handle SDFITS files. This means only nodding reduction
+is supported, no frequency switching yet. (not sure about position
+switching)
 
-In GBTILD I read 3 getters after the common 'filein' command
-   getfs
-   getnod
-   getps
+nodding:    a mirror like device make it look at a different "blank" sky
+            nodding secondary. or are there other nodding options?
+position:   telescope physically looks at a different "blank" sky?
+frequency:  use a nearby part of spectrum to be able to baseline subtract
 
-The goal in this version is to give an idea how pythonic GBTIDL would
+
+
+The goal in this "toy" version is to explore how a pythonic GBTIDL would
 look and feel and get user feedback before we continue.
-GBTOY could become GBTPY if we're doing it more pythonic, and not letting
-it mirror GBTIDL as much as GBTOY does.
-Another horrible idea is to model the interface after casa, wiht it's
+
+GBTOY could become GBTPY if we're doing it more pythonic, and not
+letting it mirror GBTIDL as much as GBTOY does. One way is to
+mirror/use/extend the pyspeckit approach. Plenty of examples of those
+exist, but for GBT only 2 examples are given in pyspeckit-tests, and
+only 3C286 sort of works now, while jd_test with
+AGBT11B_029_01.raw.acs.fits currently lacks the data.
+
+Another idea could be to model the interface after CASA, with it's
 global namespace, the "tget", "inp", "go" commands, etc.
 
-This means we have 3 possible ways to implement pythonic-GBTIDL
+This means we now have 3 possible ways to explore "GBTPY".
 
+
+
+
+The first command GBTIDL users learn about is "filein"
 
 In python a global function such as "filein" is not a good idea,
 because it's easy to imagine that this function name will be a python
 builtin command, or come from another package (although packages
-should not do this).
-
+should not import into global namespace)
 
 So the typical way in python would be something like
 
@@ -35,7 +45,7 @@ after which you could have
 
    g.filein()
 
-however, in my current model you would do this:
+In my current toy model I actually do this instead:
 
    import gbtidl
 
@@ -63,9 +73,39 @@ This way you can also see how to use multiple g's
 
 and have memory optimized parallel sessions.
 
+This suggests we should create a dictionary of IDL->PY users:
 
-  !gc.xxx   ->   g.gc.xxx
-  !g.s[0]   ->   g.s[0]
+GBTIDL        ->   GBTOY
+
+  !gc.xxx     ->   g.gc.xxx
+  !g.s[0]     ->   g.s[0]
+  filein, "a"      g.filein("a")
+
+As a first example, the "quick example" from the Users' Guide would
+read as follows in GBTOY:
+
+import gbtidl           # these two commands can be pre-loaded
+g = gbtidl.GBTIDL()     # with a special profile option to ipython
+
+g.filein()              # Specify an input file using the file selection GUI
+g.summary()             # Give a summary of the scans in the opened data file
+g.getfs(9)
+g.setregion()
+g.nfit(2)
+g.baseline()
+g.fitgauss()
+g.stats()
+g.print_ps()
+g.fileout('mydata.fits')
+g.keep()
+g.exit()
+
+
+In ipython one can make profiles, such that e.g. the command "gbtidl" would launch ipython with
+the gbtdil profile, which essentially executes the first two commands, readying the ipython
+session 
+
+    alias gbtidl='ipython --profile=gbtidl'
 
 Taking the 3 examples from the Users' Guide as listed in Appendix F,
 they would read as follows:
