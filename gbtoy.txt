@@ -18,12 +18,17 @@ Another way is to base the code more on pyspeckit, or really extend
 pyspeckit to make it cover the known GBTIDL cases.  Two GBT examples
 exist in pyspeckit-tests, and only 3C286 sort of works now, while
 jd_test with AGBT11B_029_01.raw.acs.fits currently lacks the data.
+Example test:  https://github.com/pyspeckit/pyspeckit-tests/blob/master/test_3c286.py
 
 A third way is to inspect the gbt-pipeline code. It has methods to
-read SDFITS file, but lacks the interactive parts of GBTIDL.
+read SDFITS file, but lacks the interactive parts of GBTIDL.  Don't
+get scared about AIPS and ParseTongue, this is purely for gridding and
+we would go a pure pythonic way, perhaps just their gbtgridder.
+
 
 A final idea could be to model the interface after CASA, with it's
-global namespace, the "tget", "inp", "go" commands, etc.
+global namespace, the "tget", "inp", "go" commands, etc. Just to get
+a 4th option on the menu.
 
 
 This means we now have 4 possible ways to explore "GBTPY". The remainder
@@ -36,7 +41,9 @@ The first command GBTIDL users learn is the "filein" command:
 
     filein, "ngc1234.fits"
 
-would ready this file for further processing.
+which would ready this file for further processing. Grabbing scans,
+flag, calibrate, baseline fitting etc.
+
 
 In python a global function name such as "filein" is not a good idea,
 because it's easy to imagine that this name will be a python builtin
@@ -295,5 +302,3 @@ def myscale(g, factor=1.0):
     #                           Here is the OY code
     g.setdata(factor * g.getdata())
     # if !g.frozen eq 0 then show
-
-
