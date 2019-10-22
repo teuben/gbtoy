@@ -5,7 +5,7 @@
 #
 #  GBTOY is the kiddy version
 #  GBTPY is when it's really python?
-# 
+#
 #  this needs a hacked version of pyspeckit.py  (the "teuben-gbt1" branch)
 #
 #
@@ -13,10 +13,10 @@
 #  !g.s[0]   ->   g.s[0]
 
 import numpy as np
-import pyspeckit 
+import pyspeckit
 from pyspeckit.spectrum.readers import gbt
 
-# helper class for the !gc constants 
+# helper class for the !gc constants
 
 class GC(object):
     def __init__(self):
@@ -30,9 +30,12 @@ class DataContainer(object):
     """
     def __init__(self):
         self.o = None
-
+        
     def set(self, o):
         self.o = o
+
+    def junk(self, x):
+        self.x = x
         
 # the main class:  the g object is what the user needs to instantiate
 
@@ -51,6 +54,7 @@ class GBTIDL(object):
         self._filein  = filein          # optional SDFITS file
         self._dirin   = dirin           # optional directory with related SDFITS files
         self.mode     = 0               # none (0) or file (1) or dir (2)
+        self.version  = "0.0.2"         # 
         self.s        = list(range(ndc))
         self.c        = list(range(ndc))
         for i in range(ndc):
@@ -69,7 +73,7 @@ class GBTIDL(object):
         
         _help = """
         --------------------------------------------------------------------
-                    Welcome to GBTOY v0.0.1
+                    Welcome to GBTOY v%s
         
                    http://github.edu/teuben/gbtoy
 
@@ -80,10 +84,10 @@ class GBTIDL(object):
         usage('show',True)     ; gives more information on 'show'
         --------------------------------------------------------------------
         """
-        print(_help)
+        print(_help % self.version)
         
 
-    def filein(self, filein, verbose=False):
+    def filein(self, filein, verbose=False, load=True):
         """ if no filein given, should pop up a GUI to select, but this is not supported yet
         """
         self._filein = filein
@@ -91,13 +95,14 @@ class GBTIDL(object):
 
         self._session = gbt.GBTSession(self._filein)
         if verbose: print(self._session)
-        nsrc = len(self._session.targets.keys())
-        if nsrc == 1:
-            src = list(self._session.targets.keys())[0]
-            self._targets = self._session.load_target(src)
-            print("Target: %s" % src)
-        else:
-            print('%d : too many targets for me now, not stored.' % nsrc)
+        if load:
+            nsrc = len(self._session.targets.keys())
+            if nsrc == 1:
+                src = list(self._session.targets.keys())[0]
+                self._targets = self._session.load_target(src)
+                print("Target: %s" % src)
+            else:
+                print('%d : too many targets for me now, not stored.' % nsrc)
         return self._session
 
     def dirin(self, dirin=None):
@@ -109,14 +114,16 @@ class GBTIDL(object):
         
     def summary(self, logfile=None):
         """
-        Scan Source  Vel  Proc Seq  RestF nIF nInt nFd  Az  El
+        Scan Source  Vel  Proc Seq  RestF nIF nInt nFd  Az    El
         -------------------------------------------------------------------------------
-        79  W3OH  -44.0  Track 0 1.667 2 6 1 379.2 16.1
-        80  W3OH  -44.0  Track 0 1.667 2 6 1 379.4 16.2
+        79  W3OH  -44.0  Track 0    1.667 2   6    1    379.2 16.1
+        80  W3OH  -44.0  Track 0    1.667 2   6    1    379.4 16.2
         """
         if self._filein == None:
             print("no filein set")
+            return None
         print("FILEIN: %s" % self._filein)
+        # for now
         print(self._session)
 
     def header(self, buffer=0):
@@ -195,6 +202,11 @@ class GBTIDL(object):
         
     def subtract(self, r1, r2, rsub):
         print("GBTIDL> ")
+
+    def sclear(self, accumnum=0):
+        print("GBTIDL> ")        
+        # uses accumclear
+        
 
     def usage(self, task, verbose=False):
         """ print the long or short __docstring__
