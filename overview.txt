@@ -1,0 +1,60 @@
+GBT python work
+---------------
+
+We are faced with 3 existing packages: GBTIDL, gbt-pipeline and
+gbtgridder. Only the first one is not in python, and will need to be
+integrated. 
+
+
+Nomenclature of SD observations:
+   region      - over many days and possibly RA/DEC
+   session     - same 'day' continguous in time
+   block       - observation unit
+   scan        - integrations that belong together (few mins)
+   integration - integrtion of a specific state (pointing, band, polarizations, ...)
+
+(where does OTF come in here?)
+
+
+
+GBTIDL can be 'converted' to python in several ways (details in gbtoy.txt)
+
+1)  keep the function names and functionality the same as much as possible,
+    but use pyspeckit under the hood
+
+2)  same as 1), but literally  translating IDL -> python. A lot more work.
+
+3)  using pyspeckit natively
+
+4)  bringing the sdfits interfaces that gbt-pipeline uses into the loop.
+    probably not useful to 1) , but could be useful for 2)
+
+Either way, the peculiar graphics display that GBTIDL is using should
+be investigated if pure matplotlib has this functionality, or do we
+need an embedded wxPython ot QtPython interface around it (or another
+GUI wrapper).
+
+
+Data / Possible Test Cases
+--------------------------
+
+1.M81/M82 2003 data :   https://safe.nrao.edu/wiki/bin/view/GB/Data/M81ExampleExectution
+
+
+
+Other Software
+--------------
+
+UniPOPS:    the pre-historic program on which everything seems to be based    https://www.cv.nrao.edu/unipops/
+
+DISH:  (AIPS++ and glish):  https://safe.nrao.edu/wiki/bin/view/GB/Data/DishUsersGuideForGBT
+       Note that GBTIDL derived all the functionality from DISH, which in itself was derived from UniPOPS
+       scan  - integrations 
+
+CASA:  there is an SD package, which originated with the Nobeyama 45m
+       https://casa.nrao.edu/casadocs/casa-5.4.1/single-dish-calibration/single-dish-data-calibration-and-reduction
+
+CLASS: https://www.iram.fr/IRAMFR/ARC/documents/filler/casa-gildas.pdf
+       http://www.iram.fr/IRAMFR/GILDAS/
+       and their python interfaces:
+       https://safe.nrao.edu/wiki/bin/view/GB/Data/M81ExampleExectution
