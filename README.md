@@ -14,6 +14,10 @@ toying with gbt spectra in python
 
 * https://github.com/pyspeckit     pyspeckit  (has routines to read GBT/SDFITS data; Adam Ginsburg))
 
+* https://github.com/astropy/specutils  astropy's workflow.
+
+* https://github.com/radio-astro-tools/   varoious modules (spectral-cube, radio-beam,gaussfit_catalog , signal-id) 
+
 * https://github.com/GreenBankObservatory   gbt-pipeline and gbtgridder
 
 * https://github.com/GBTSpectroscopy  gbtpipe (Erik Rosolowsky)
