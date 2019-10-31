@@ -17,14 +17,15 @@ Nomenclature of SD observations:
 
 
 
-GBTIDL can be 'converted' to python in several ways (details in gbtoy.txt)
+GBTIDL can be 'converted' to python in several ways (some details in gbtoy.txt)
 
 1)  keep the function names and functionality the same as much as possible,
     but use pyspeckit under the hood
 
 2)  same as 1), but literally  translating IDL -> python. A lot more work.
+    Functionally the same as  was done uniPOPS -> dish -> gbtidl it seems.
 
-3)  using pyspeckit natively
+3)  using pyspeckit natively. raw python power.
 
 4)  bringing the sdfits interfaces that gbt-pipeline uses into the loop.
     probably not useful to 1) , but could be useful for 2)
@@ -32,7 +33,15 @@ GBTIDL can be 'converted' to python in several ways (details in gbtoy.txt)
 Either way, the peculiar graphics display that GBTIDL is using should
 be investigated if pure matplotlib has this functionality, or do we
 need an embedded wxPython ot QtPython interface around it (or another
-GUI wrapper).
+GUI wrapper).  https://docs.python.org/3/faq/gui.html
+
+
+Misc Requirements
+-----------------
+
+- data simulator (also useful for optimizing gridding options)
+  - pointed vs. OTF
+
 
 
 Data / Possible Test Cases
@@ -45,7 +54,8 @@ Data / Possible Test Cases
 Other Software
 --------------
 
-UniPOPS:    the pre-historic program on which everything seems to be based    https://www.cv.nrao.edu/unipops/
+UniPOPS:    the pre-historic program on which everything (DISH, GBTIDL) seems to be based
+	    https://www.cv.nrao.edu/unipops/
 
 DISH:  (AIPS++ and glish):  https://safe.nrao.edu/wiki/bin/view/GB/Data/DishUsersGuideForGBT
        Note that GBTIDL derived all the functionality from DISH, which in itself was derived from UniPOPS
