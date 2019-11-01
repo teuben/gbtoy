@@ -72,47 +72,64 @@
 
 \section{Overview}
 
+The GBT/GBO single dish processing software is reviewed in light of
+a more coherent workflow using python on the top level, and abandoning the
+IDL licensed software.\footnote{weather info is also needed in some
+  calibration procedures, making it still hard to work offsite}
+
+The current data formats is SDFITS, and will continue to be used.
+
+We will however take this opportunity to review the whole workflow of
+single dish data processing from the astronomers' point of view, by
+comparing other packages such as {\tt comb} and {\tt CLASS}. The
+predecessors of {\tt GBTIDL} are {\tt DISH} (under AIPS++) and before
+that {\tt uniPOPS}. At the current time (2019 as we write this),
+python is the most likely candidate for an data processing package
+dealing with single dish data. Given usage of jupyter notebooks, it
+would also be nice if any new efforts could make use of this.
+
+
+\section{Existing GBT code}
+
 
 We are faced with 3 existing packages: GBTIDL, gbt-pipeline and
-gbtgridder. Only the first one is not in python, and will need to be
-integrated. 
-
+gbtgridder, of which the latter two are already in python. There is
+a derived product, gbtpipe, written by Rosolowsky. All codes are
+publicly available. The pulsar timing observations seem to follow
+in a completely different category, and will be ``ignored'' for the
+moment until we understand what to do with them.
 
 Nomenclature of SD observations:
 
 \begin{itemize}
-  \item
-   region      - over many days and possibly RA/DEC
-  \item
-   session     - same 'day' continguous in time
-  \item
-   block       - observation unit
-  \item
-   scan        - integrations that belong together (few mins)
-  \item
-   integration - integrtion of a specific state (pointing, band, polarizations, ...)
+  \item[{\bf region}]  : over many days and possibly RA/DEC
+  \item[{\bf session}] : same 'day' continguous in time
+  \item[{\bf block}]   : observation unit
+  \item[{\bf scan}]    : integrations that belong together (few mins)
+  \item[{\bf integration}] : integrtion of a specific state (pointing, band, polarizations, ...)
 \end{itemize}   
 
 
 In addition there are several ways how to calibrate SD spectra, broadly separated
-in position or frequency switching.
+into position and frequency switching. Calibration also depends on the instrument used.
 
 \begin{itemize}
 \item
 nodding:    a mirror like device make it look at a different "blank" sky
 nodding secondary. or are there other nodding options?
 \item
-  position:   telescope physically looks at a different "blank" sky?
-  \item
+position:   telescope physically looks at a different "blank" sky?
+\item
 frequency:  use a nearby part of spectrum to be able to baseline subtract
 \end{itemize}
 
-OTF would scan over the source far enough out that the ``off'' positions are reached at
+OTF (e.g. \cite{2007AA...474..679M})
+would scan over the source far enough out that the ``off'' positions are reached at
 the edges of the scans.
 
 \subsection{Conversion to python?}
 
-GBTIDL can be 'converted' to python in several ways (some details in gbtoy.txt)
+GBTIDL can be 'converted' to python in several ways:
 
 \begin{enumerate}
 \item
@@ -132,7 +149,7 @@ probably not useful to 1) , but could be useful for 2)
 Either way, the peculiar graphics display that GBTIDL is using should
 be investigated if pure matplotlib has this functionality, or do we
 need an embedded wxPython ot QtPython interface around it (or another
-GUI wrapper).  https://docs.python.org/3/faq/gui.html
+GUI wrapper).  \url{https://docs.python.org/3/faq/gui.html}
 
 
 \subsection{Data / Possible Test Cases}
@@ -144,25 +161,132 @@ We have the following options:
 \begin{enumerate}
 
 \item
-  The 3 examples in the users' guide
+  The 3 examples in the users' guide (ngc5291.fits, W3OH.fits, IC1481.fits)
 \item
-  The 2 examples in the SDFITS standards page
+  The 2 examples in the SDFITS standards page (TREG\_091209.cal.acs.fits, Parkes\_GASS.fits
+\item
+  The example in the pyspeckit packate (3C286.fits)
 \item
   M81/M82 2003 data as described on\newline
   \url{https://safe.nrao.edu/wiki/bin/view/GB/Data/M81ExampleExectution}
-
+\item
+  EDGE survey data via Tony Wong
 \end{enumerate}
+
+There appear to be some SDFITS ``dialect'' issues between these files that need to be understood.
 
 \section{Other Software}
 
+Here we describe existing software packages.
+
 \subsection{comb}
 
+Turns out Alberto has also used this, but Marc Pound is our local resident expert.
+
+Before we list the famous two-letter commands in {\tt comb}, first some nomenclature within {\tt comb}:
+
+\begin{itemize}
+  
+\item A {\bf stack} is a spectrum for local processing (as opposed to a
+  {\bf scan} which is the unprocessed but typically calibrated spectrum).
+  In comb, stacks 1-3 are in memory and stacks 4-N are disk storage.
+  
+\item  
+  The {\bf use array} is the bitmask of channels to use when subtracting a
+  baseline (there will forever be the confusion of what a mask means: use it
+  or not use it, and does this apply to where the signal is, or where there
+  is no signal and the baseline needs to be fitted). Not unlike the difference
+  between masks in python and casa.
+  
+\end{itemize}
+
+
+\footnotesize\begin{verbatim}
+ad - Add scans to stack2
+af - Attach a FITS file to an image
+bc - Designate bad channels
+c - Calculate something
+ca - Calculate values from stacks
+cc - Change center channel
+cm - Space-space Contour Map
+co - Combine two stacks, result in 1 & 2
+cp - Contour Plot an image
+cr - Cursor read
+cv - Convolve stack 1 with stack 3
+da - Define an area of an image
+dm - Define macro
+do - Loop through a command string
+dv - Declare user Variables
+e - Execute a shell command
+el - Eliminate bad chans in stack 1.
+em - Empty a stack
+fl - Flag location on graph
+fo - Fold freq switched data in stack 1
+ft - Fourier operations on baseline
+gf - Fit a gaussian function to part of a spectrum
+gm - Graphics Manipulation
+gt - Put scan in st 1
+hc - Make a Hard copy of the current screen
+im - Image manipulate
+in - Integrate part of a spectrum
+is - Interpolate a spectrun for a given position
+lc - List commands
+li - Fit and remove a polynomial baseline
+lk - Look at where stacks are on the sky
+me - Map data Extraction
+nf - Switch data files
+ns - Name stacks directory
+op - Set options
+p - Print something
+pa - Pause in execution
+pd - Print data
+pf - Fit a parabola to part of a spectrum
+ph - Print in hms format
+pl - Plot stack 1
+pr - Printf to standard output or a string variable
+q - Exit comb
+rc - Define relative coordinate system
+ri - Redirect command input from a file or string
+rm - Calculate rms and ssb noise figure for stack 1
+ro - Redirect output to a file or string variable
+rs - Rescale and add constant to stack 1
+rt - Retrieve stack
+sc - Scanf from a file, stdin, or a string variable
+sl - Make a slice through an image
+sp - Make a scatter plot comparing two images
+sq - Squish - increase or decrease chan width
+st - Store stack
+th - Temperature Histogram
+tp - Total power - average chans in stack1 weighted by cal in stack3
+uf - Execute a user function on stack 1
+up - Update a stacks directory
+us - Change use array
+v - Compute value for map
+vc - Velocity Space Contour Plot
+vm - Calculate Virial Mass
+wc - Write data Cube
+wf - Write an image to a FITS file
+wr - Write scan back onto file
+wu - What is up (Plot source positions in az and el)
+xf - Transfer stacks to directory 2 after making them unique (1/position)
+
+\end{verbatim}
+\normalsize
+
+ 
 \subsection{UniPOPS}
 the pre-historic program on which everything (DISH, GBTIDL) seems to be based
-	    https://www.cv.nrao.edu/unipops/
+\url{https://www.cv.nrao.edu/unipops/}
+
 
 \subsection{DISH}
-DISH:  (AIPS++ and glish):  https://safe.nrao.edu/wiki/bin/view/GB/Data/DishUsersGuideForGBT
+DISH was based on uniPOPS. ADASS 1999(?) has several papers dedicated to dish:
+\cite{2000ASPC..216..498G},
+\cite{2000ASPC..216..494G}, and 
+\cite{2000ASPC..216..243G}.
+
+(AIPS++ and glish):  https://safe.nrao.edu/wiki/bin/view/GB/Data/DishUsersGuideForGBT
+
        Note that GBTIDL derived all the functionality from DISH, which in itself was derived from UniPOPS
        scan  - integrations 
 
@@ -170,15 +294,18 @@ DISH:  (AIPS++ and glish):  https://safe.nrao.edu/wiki/bin/view/GB/Data/DishUser
   there is an SD package, which originated with the Nobeyama 45m\newline
   \url{https://casa.nrao.edu/casadocs/casa-5.4.1/single-dish-calibration/single-dish-data-calibration-and-reduction}
 
-\subsection{CLASS}       
+\subsection{CLASS}
+
+We have several experts locally: Alberto, Miguel/Andy, Maitraiyee
+  
  https://www.iram.fr/IRAMFR/ARC/documents/filler/casa-gildas.pdf
        http://www.iram.fr/IRAMFR/GILDAS/
-       and their python interfaces:
-       https://safe.nrao.edu/wiki/bin/view/GB/Data/M81ExampleExectution
+       and their new python interfaces:
 
 \section{gbtoy}       
 
-GBTOY is a toy model for GBTIDL, pythonizing their commands.
+GBTOY is a toy model for GBTIDL, pythonizing their familiar commands
+(going back 3 different software packages).
 
 In this version we use pyspeckit (+astropy) under the hood, since it
 knows how to handle SDFITS files and has a graphics
@@ -196,7 +323,7 @@ Example test:  \url{https://github.com/pyspeckit/pyspeckit-tests/blob/master/tes
 
 A third way is to inspect the gbt-pipeline code. It has methods to
 read SDFITS file, but lacks the interactive parts of GBTIDL.  Don't
-get scared about AIPS and ParseTongue, this is purely for gridding and
+get scared about AIPS and ParselTongue, this is purely for gridding and
 we would go a pure pythonic way, perhaps just their gbtgridder.
 
 
@@ -495,7 +622,7 @@ for i=g.range(3,9):
   
 def myscale(g, factor=1.0):
     """
-    #                            Here is the IDL code
+    #                            Here is the original IDL code
     pro myscale,factor
       tmp_data = getdata()
       tmp_data = tmp_data * factor
@@ -503,25 +630,54 @@ def myscale(g, factor=1.0):
       if !g.frozen eq 0 then show
     end
     """
-    #                           Here is the OY code
+    #                           Here is the new OY code
     g.setdata(factor * g.getdata())
     # if !g.frozen eq 0 then show
 \end{lstlisting}
 
-\section{todo}
+\section{Questions}
 
 \begin{enumerate}
 
 \item comb
 
 \item class acts like a database, so it's easy to make selections and operate on those (e.g. gridding)
+  In GBTIDL there is the {\it ???} command which reads all spectra from a directory and is able
+  to handle that in the same fashion?
 
-\item   what could the role of aoflagger \cite{offringa-2012-morph-rfi-algorithm} be?
+\item   what could the role of aoflagger \cite{offringa-2012-morph-rfi-algorithm} be? Or is GBT already
+  using this?
 
 \item  data simulator (also useful for optimizing gridding options) - pointed vs. OTF
 
+
+\item pulsar timing data?
   
-  
+\end{enumerate}
+
+\section{Software}
+
+The following software has been discussed in this paper (where available, we use their ASCL id for reference):
+
+
+\begin{enumerate}
+\item UniPOPS: \url{https://ascl.net/1503.007}
+\item DISH (within AIPS++)
+\item GBTIDL: \url{https://ascl.net/1303.019}
+\item comb
+\item CLASS (within GILDAS) \url{https://ascl.net/1305.010}
+\item pyspeckit: \url{https://ascl.net/1109.001}
+\item aoflagger: \url{https://ascl.net/1010.017}
+\item CASA \url{https://ascl.net/1107.013}
+\item specutils: \url{https://ascl.net/1902.012}
+\item spectral-cube (within radio-astro-tools) \url{https://ascl.net/1609.017}
+\item Astropy \url{https://ascl.net/1304.002}
+\item SpecViz \url{https://ascl.net/1902.011}
+\item gbt-pipeline \url{https://github.com/GreenBankObservatory/gbt-pipeline}
+\item gbtgridder \url{https://github.com/GreenBankObservatory/gbtgridder}
+\item gbtpipe \url{https://github.com/GBTSpectroscopy/gbtpipe}
+\item AIPS \url{https://ascl.net/9911.003}
+\item ParselTongue \url{https://ascl.net/1208.020}
 \end{enumerate}
 
 \bibliographystyle{unsrt}
