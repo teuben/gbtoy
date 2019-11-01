@@ -1,0 +1,530 @@
+%Template credit: Jan-Willem Steeb, NRAO
+
+\documentclass[12pt,a4paper]{article}
+
+\usepackage{graphics,graphicx}
+\usepackage[%
+    font={small,sf},
+    labelfont=bf,
+    format=hang,    
+    format=plain,
+    margin=0pt,
+    width=0.8\textwidth,
+]{caption}
+\usepackage[list=true]{subcaption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{lmodern}  
+\usepackage{amsmath}  
+\usepackage{xcolor}   
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  frame=single,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+}
+
+\textheight=247mm
+\textwidth=180mm
+\topmargin=-7mm
+\oddsidemargin=-10mm
+\evensidemargin=-10mm
+\parindent 10pt
+
+%%%%%%%%%%%%%%%%%%%%%
+%%%%% Custom Commands %%%%
+%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\vb}[1]{\text{\textbf{#1}}} %make non special characters bold in math mode, used for vectors and matrices
+\newcommand{\n}[1]{\text{{#1}}} %removes math styling, useful for subscripts
+
+%Mathematic Functions
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\mmid}{mid}
+\DeclareMathOperator*{\at}{arctan2}
+
+%%%%%%%%%%%%%%%%%%%%%
+%%%%% Start of document %%%%% 
+%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\pagestyle{plain}
+\pagenumbering{arabic}
+ 
+%%%%%%%%%%%%%
+%%%%% Title  %%%%%
+%%%%%%%%%%%%%%
+
+\begin{center}
+{\Large{\bf{  GBO python  \\  }}} 
+
+\end{center}
+\bigskip
+
+\centerline{Peter Teuben (University of Maryland, USA)}
+
+\centerline{Version 0.1 - \today}
+\bigskip
+
+\section{Overview}
+
+
+We are faced with 3 existing packages: GBTIDL, gbt-pipeline and
+gbtgridder. Only the first one is not in python, and will need to be
+integrated. 
+
+
+Nomenclature of SD observations:
+
+\begin{itemize}
+  \item
+   region      - over many days and possibly RA/DEC
+  \item
+   session     - same 'day' continguous in time
+  \item
+   block       - observation unit
+  \item
+   scan        - integrations that belong together (few mins)
+  \item
+   integration - integrtion of a specific state (pointing, band, polarizations, ...)
+\end{itemize}   
+
+
+In addition there are several ways how to calibrate SD spectra, broadly separated
+in position or frequency switching.
+
+\begin{itemize}
+\item
+nodding:    a mirror like device make it look at a different "blank" sky
+nodding secondary. or are there other nodding options?
+\item
+  position:   telescope physically looks at a different "blank" sky?
+  \item
+frequency:  use a nearby part of spectrum to be able to baseline subtract
+\end{itemize}
+
+OTF would scan over the source far enough out that the ``off'' positions are reached at
+the edges of the scans.
+
+\subsection{Conversion to python?}
+
+GBTIDL can be 'converted' to python in several ways (some details in gbtoy.txt)
+
+\begin{enumerate}
+\item
+  keep the function names and functionality the same as much as possible,
+    but use pyspeckit under the hood
+\item
+  same as 1), but literally  translating IDL -> python. A lot more work.
+    Functionally the same as  was done uniPOPS -> dish -> gbtidl it seems.
+\item
+  using pyspeckit natively. raw python power.
+\item
+  bringing the sdfits interfaces that gbt-pipeline uses into the loop.
+probably not useful to 1) , but could be useful for 2)
+
+\end{enumerate}
+
+Either way, the peculiar graphics display that GBTIDL is using should
+be investigated if pure matplotlib has this functionality, or do we
+need an embedded wxPython ot QtPython interface around it (or another
+GUI wrapper).  https://docs.python.org/3/faq/gui.html
+
+
+\subsection{Data / Possible Test Cases}
+
+We will need some standard datasets that have known answers. They probably will come in SDFITS format.
+
+We have the following options:
+
+\begin{enumerate}
+
+\item
+  The 3 examples in the users' guide
+\item
+  The 2 examples in the SDFITS standards page
+\item
+  M81/M82 2003 data as described on\newline
+  \url{https://safe.nrao.edu/wiki/bin/view/GB/Data/M81ExampleExectution}
+
+\end{enumerate}
+
+\section{Other Software}
+
+\subsection{comb}
+
+\subsection{UniPOPS}
+the pre-historic program on which everything (DISH, GBTIDL) seems to be based
+	    https://www.cv.nrao.edu/unipops/
+
+\subsection{DISH}
+DISH:  (AIPS++ and glish):  https://safe.nrao.edu/wiki/bin/view/GB/Data/DishUsersGuideForGBT
+       Note that GBTIDL derived all the functionality from DISH, which in itself was derived from UniPOPS
+       scan  - integrations 
+
+\subsection{CASA/sd}
+  there is an SD package, which originated with the Nobeyama 45m\newline
+  \url{https://casa.nrao.edu/casadocs/casa-5.4.1/single-dish-calibration/single-dish-data-calibration-and-reduction}
+
+\subsection{CLASS}       
+ https://www.iram.fr/IRAMFR/ARC/documents/filler/casa-gildas.pdf
+       http://www.iram.fr/IRAMFR/GILDAS/
+       and their python interfaces:
+       https://safe.nrao.edu/wiki/bin/view/GB/Data/M81ExampleExectution
+
+\section{gbtoy}       
+
+GBTOY is a toy model for GBTIDL, pythonizing their commands.
+
+In this version we use pyspeckit (+astropy) under the hood, since it
+knows how to handle SDFITS files and has a graphics
+interface. Currently this means only nodding reduction is supported,
+no frequency switching yet (not sure about position switching).
+
+The goal in this "toy" version is to explore how a pythonic GBTIDL would
+look and feel and get user feedback before we continue.
+
+Another way is to base the code more on pyspeckit, or really extend
+pyspeckit to make it cover the known GBTIDL cases.  Two GBT examples
+exist in pyspeckit-tests, and only 3C286 sort of works now, while
+jd\_test with AGBT11B\_02\_01.raw.acs.fits currently lacks the data.
+Example test:  \url{https://github.com/pyspeckit/pyspeckit-tests/blob/master/test_3c286.py}
+
+A third way is to inspect the gbt-pipeline code. It has methods to
+read SDFITS file, but lacks the interactive parts of GBTIDL.  Don't
+get scared about AIPS and ParseTongue, this is purely for gridding and
+we would go a pure pythonic way, perhaps just their gbtgridder.
+
+
+A final idea could be to model the interface after CASA, with it's
+global namespace, the "tget", "inp", "go" commands, etc. Just to get
+a 4th option on the menu.
+
+
+This means we now have 4 possible ways to explore "GBTPY". The remainder
+of this document explores option 1.
+
+
+
+
+The first command GBTIDL users learn is the "filein" command:
+
+\begin{lstlisting}[language=bash]
+    filein, "ngc1234.fits"
+\end{lstlisting}
+
+which would ready this file for further processing. Grabbing scans,
+flag, calibrate, baseline fitting etc.
+
+
+In python a global function name such as "filein" is not a good idea,
+because it's easy to imagine that this name will be a python builtin
+command, or come from another package (though packages should not
+import into global namespace).
+
+So the typical way in python would be something like
+
+\begin{lstlisting}[language=bash]
+   import gbtidl as g
+\end{lstlisting}
+
+after which you could have
+
+\begin{lstlisting}[language=bash]
+   g.filein()
+\end{lstlisting}
+
+In my current toy model I take this one more step, and do this instead:
+
+\begin{lstlisting}[language=bash]
+   import gbtidl
+   g = gbtidl.GBTIDL(ndc=32)
+\end{lstlisting}
+
+where I've created a "g" object with 32 DC's instead of the default 16.
+
+You would then have access to these DC's as
+\begin{lstlisting}[language=bash]
+   g.s[0]     # what GTBIDL calls the PDC
+\end{lstlisting}
+and
+\begin{lstlisting}[language=bash]
+   g.c[0]
+\end{lstlisting}
+   
+all the way to
+
+\begin{lstlisting}[language=bash]
+   g.s[31]
+\end{lstlisting}
+
+if you want to know what 'ndc' was used,
+
+\begin{lstlisting}[language=bash]
+   print("# DC's = %d" % len(g.s))
+\end{lstlisting}
+
+This way you can also see how to use multiple g's
+
+\begin{lstlisting}[language=bash]
+   g1 = gbtidl.GBTIDL(ndc=10)
+   g2 = gbtidl.GBTIDL()
+\end{lstlisting}
+
+and have memory optimized parallel sessions of GBTIDL in the same
+python session!
+
+We will need a dictionary of IDL->PY users, for example:
+
+\begin{lstlisting}[language=bash]
+GBTIDL        ->   GBTOY
+
+  !gc.xxx     ->   g.gc.xxx
+  !g.s[0]     ->   g.s[0]
+  filein, "a"      g.filein("a")
+\end{lstlisting}
+
+As a first example, the "quick example" on p2. of the Users' Guide would
+read as follows in GBTOY:
+
+\begin{lstlisting}[language=python]
+% gbtidl                # start up an ipython session with the gbtidl profile
+
+g.filein()              # Specify an input file using the file selection GUI
+g.summary()             # Give a summary of the scans in the opened data file
+g.getfs(9)
+g.setregion()
+g.nfit(2)
+g.baseline()
+g.fitgauss()
+g.stats()
+g.print_ps()
+g.fileout('mydata.fits')
+g.keep()
+g.exit()
+
+\end{lstlisting}
+
+
+In ipython one can make profiles, such that e.g. the command "gbtidl" would launch ipython with
+the gbtidl profile, which essentially executes the first two commands, readying the ipython
+session 
+
+    alias gbtidl='ipython --profile=gbtidl'
+
+Taking the 3 examples from the Users' Guide as listed in Appendix F,
+they would read as follows:
+
+\subsection{Example 1:   Position Switching}
+
+\begin{lstlisting}[language=python]
+g.filein('ngc5291.fits')
+g.summary()
+
+for i=g.range(51,57,2):
+    g.getps(i, plnum=0)
+    g.accum()
+for i=g.range(51,57,2):
+    g.getps(i, plnum=1)
+    g.accum()
+g.ave()
+
+g.chan()
+g.nregion,[3300,14800,17900,31000])
+g.nfit(3)
+g.sety(0.2, 0.5)
+g.bshape()
+g.baseline()
+g.unzoom()
+
+g.hanning(decimate=True)
+g.bdrop(2500)
+g.edrop(2500)
+g.velo()
+g.stats(2000, 3000)
+g.stats(3900, 4800)
+g.boxcar(8)
+\end{lstlisting}
+
+
+\subsection{Example 2: Frequency Switching}
+
+\begin{lstlisting}[language=python]
+g.filein('W3OH.fits')
+g.summary()
+
+for i in g.range(79,83):
+    g.getfs(i, plnum=1, ifnum=0)
+    g.wait(2)
+
+g.sety(-2, 2)
+for i in g.range(79,83):
+    g.getfs(i, plnum=1, ifnum=0)
+    g.wait(2)
+
+for i in g.range(0,5):
+    g.getfs(83,intnum=i, plnum=1, ifnum=0)
+    g.wait(2)
+
+
+g.velo()
+g.freeze()
+for i in g.range(79,83):
+   for j in g.range(0,5):
+      for k in g.range(0,1):
+         g.getfs(i, units='Jy', intnum=j, plnum=k, ifnum=0)
+	 a = g.stats(-3000,-2000,quiet=True)
+         if a.rms < 0.5:
+	    g.accum()
+	 else:
+	    print('Skipping ' ,i, j, k)
+g.unfreeze()
+g.ave()
+
+g.flag([80,82], intnum=[1,3], plnum=1, ifnum=0, idstring='corrupt')
+g.flag( 83, intnum=[2,4], plnum=1, ifnum=0, idstring='corrupt')
+g.listflags(summary=True)
+g.freeze()
+for i in g.range(79,83):
+   for k in g.range(0,1):
+      g.getfs(i,units='Jy', plnum=k, ifnum=0)
+      g.accum()
+g.unfreeze()
+g.ave()
+
+g.chan()
+my_spec = dcextract(g.s[0],7500,9500)
+g.bdrop(0)
+g.edrop(0)
+g.show(my_spec)
+g.s[0] = my_spec
+g.show()
+
+g.sety(-0.2,0.4)     # Zoom in a bit
+g.setregion()
+g.nfit(7)
+g.bshape()
+g.baseline()
+
+g.velo()
+g.setx(-60,-30)
+g.freey()
+g.fitgauss()
+
+\end{lstlisting}
+
+\subsection{Example 3: Nodding}
+
+\begin{lstlisting}[language=python]
+g.filein('I1481.fits')
+g.getnod(182, plnum=0)
+g.accum()
+g.getnod(182, plnum=1)
+g.accum()
+g.getnod(184, plnum=0)
+g.accum()
+g.getnod(184, plnum=1)
+g.accum()
+
+g.ave()
+g.setregion()
+g.nfit(3)
+g.baseline()
+\end{lstlisting}
+
+\subsubsection{or the alternative:}
+
+\begin{lstlisting}[language=python]
+
+g.filein('IC1481.fits')
+g.summary()
+
+
+g.emptystack()
+g.sclear()
+g.addstack(182, 188, 2)
+g.tellstack()
+
+
+
+g.freeze()
+for i in range(g.acount):
+  getnod( g.astack(i), plnum=0, units='Jy', tsys=60
+  g.accum()
+  g.copy(0, i*2+2)
+  g.getnod( g.astack(i), plnum=1, units='Jy', tsys=60)
+  g.accum()
+  g.copy(0, i*2+3)
+g.unfreeze()
+g.ave()
+
+
+g.setregion()
+g.nfit(3)
+g.bshape()
+g.baseline()
+
+g.hanning(decimate=False)
+g.fileout('saved.fits')
+g.keep()
+
+g.copy(2, 0)
+g.baseline()
+g.show()
+g.copy(0, 2)
+g.freeze()
+for i=g.range(3,9):
+  g.copy(i, 0)
+  g.baseline()
+  g.bias( float(i-2)*0.2)
+  g.copy(0, i)
+g.show(2)
+g.unfreeze()
+for i=g.range(3,9):
+  g.oshow(i, color='red')
+\end{lstlisting}
+
+\subsection{example from manual how IDL and OY compare}
+
+\begin{lstlisting}[language=python]
+
+  
+def myscale(g, factor=1.0):
+    """
+    #                            Here is the IDL code
+    pro myscale,factor
+      tmp_data = getdata()
+      tmp_data = tmp_data * factor
+      setdata, tmp_data
+      if !g.frozen eq 0 then show
+    end
+    """
+    #                           Here is the OY code
+    g.setdata(factor * g.getdata())
+    # if !g.frozen eq 0 then show
+\end{lstlisting}
+
+\section{todo}
+
+\begin{enumerate}
+
+\item comb
+
+\item class acts like a database, so it's easy to make selections and operate on those (e.g. gridding)
+
+\item   what could the role of aoflagger \cite{offringa-2012-morph-rfi-algorithm} be?
+
+\item  data simulator (also useful for optimizing gridding options) - pointed vs. OTF
+
+  
+  
+\end{enumerate}
+
+\bibliographystyle{unsrt}
+\bibliography{gbtoy}
+
+\end{document}
