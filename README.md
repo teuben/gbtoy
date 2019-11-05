@@ -4,7 +4,7 @@ toying with gbt spectra in python
 
 ## notes
 
-* gbtidl does not work with gdl, it really needs IDL
+* gbtidl does not work with gdl, it really needs IDL; pydl also does not seem useful
 
 * Lots of info on http://gbtidl.nrao.edu/
 
@@ -21,3 +21,7 @@ toying with gbt spectra in python
 * https://github.com/GreenBankObservatory   gbt-pipeline and gbtgridder
 
 * https://github.com/GBTSpectroscopy  gbtpipe (Erik Rosolowsky)
+
+* https://sourceforge.net/p/aoflagger/wiki/Home/ aoflagger
+
+* http://www.mrao.cam.ac.uk/~rachael/specx/ SpecX - part of starlink (JCMT, 2002)
