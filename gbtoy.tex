@@ -81,25 +81,74 @@ The current data formats is SDFITS, and will continue to be used.
 
 We will however take this opportunity to review the whole workflow of
 single dish data processing from the astronomers' point of view, by
-comparing other packages such as {\tt comb} and {\tt CLASS}. The
-predecessors of {\tt GBTIDL} are {\tt DISH} (under AIPS++) and before
-that {\tt uniPOPS}. At the current time (2019 as we write this),
-python is the most likely candidate for an data processing package
-dealing with single dish data. Given usage of jupyter notebooks, it
-would also be nice if any new efforts could make use of this.
+comparing functionality offered in other packages such as {\tt comb}, {\tt SPECX},
+and {\tt CLASS}. The predecessors of {\tt GBTIDL} are {\tt DISH}
+(under AIPS++) and before that {\tt uniPOPS}. At the current time
+(2019 as we write this), python is the most likely candidate for an
+data processing package dealing with single dish data. Given usage of
+jupyter notebooks, it would also be nice if any new efforts could make
+use of this.
+
+\begin{figure}[h]
+\centering
+  \includegraphics[width=\textwidth]{fig1.eps}
+\caption{\label{fig1} Evolution of the GBT analysis software}
+\end{figure}
+
+\section{Functionality}
+
+What is the functionality we would want from a Single Dish Data Reduction
+package? 
+
+\begin{itemize}
+
+\item Deal with spectra on an individual basis
+  \begin{itemize}
+\item Visualize spectra, a versatile interacticve plotting tool is needed
+  that can handle overlaying fits and/or other spectra
+\item Calibrate spectra (Freq, Pos, Nod)
+
+\item Flagging/Masking data
+
+\item Edit header (e.g. to fix problems)  
+
+\item Fit models to spectra
+
+
+  \end{itemize}
+
+
+\item good batch system for pipeline and/or scripts to define a workflow on one spectrum
+  and then apply it to all
+  
+
+  
+\item Organize spectra by properties such as RA, DEC (for gridding) - is there even anything else?
+
+\item Gridding spectra in RA,DEC or GLAT,GLON, even in AZ,EL for debugging?
+
+\item Work with lag spectra?
+
+\item Does OTF have special needs?
+
+\item integrate well with a python eco-system. Many users are now familiar with
+  python, numpy etc.  If the code allows you to get and set numpy arrays the way
+  they like, that's a gain. It should also be useable via a the classic ``import''
+  mechanism, and expected to work well with packages such as astropy
+\end{itemize}
 
 
 \section{Existing GBT code}
 
 
 We are faced with 3 existing packages: GBTIDL, gbt-pipeline and
-gbtgridder, of which the latter two are already in python. There is
+gbtgridder, of which the latter two are already in python. There is also
 a derived product, gbtpipe, written by Rosolowsky. All codes are
 publicly available. The pulsar timing observations seem to follow
 in a completely different category, and will be ``ignored'' for the
 moment until we understand what to do with them.
 
-Nomenclature of SD observations:
+Nomenclature of SD observations ({\it as found in one of the GBT manuals}):
 
 \begin{itemize}
   \item[{\bf region}]  : over many days and possibly RA/DEC
@@ -127,6 +176,37 @@ OTF (e.g. \cite{2007AA...474..679M})
 would scan over the source far enough out that the ``off'' positions are reached at
 the edges of the scans.
 
+\section{GBTIDL}
+
+As a reminder, here is the example from the GBTIDL Users' Guide, where you get
+a quick look and feel of the command line interface in GBTIDL:
+
+\begin{lstlisting}[language=bash]
+% gbtidl                         ; Start GBTIDL from the unix prompt
+
+GBTIDL -> filein                 ; Specify an input file using the file selection GUI
+GBTIDL -> summary                ; Give a summary of the scans in the opened data file
+GBTIDL -> getfs, 9               ; Retrieve, calibrate, and plot a frequency switched  
+                                 ;  spectrum (other observing modes use different commands)
+
+GBTIDL -> setregion              ; Set region used to determine baseline
+GBTIDL -> nfit,2                 ; Specify that a 2nd order baseline will be used
+GBTIDL -> baseline               ; Fit and subtract a baseline
+
+GBTIDL -> fitgauss               ; Fit a Gaussian profile to the plotted spectrum.  The mouse
+                                 ;  is used to set initial guesses
+
+GBTIDL -> stats                  ; For the displayed spectrum, show statistics such as
+                                 ; the RMS, maximum and minimum x and y values
+GBTIDL -> print_ps               ; Write the current spectrum to a postscript file
+
+GBTIDL -> fileout, 'mydata.fits' ; Specify the output file name for saved data
+GBTIDL -> keep                   ; Save the spectrum currently displayed
+		    
+GBTIDL -> exit                   ; Exit GBTIDL
+
+\end{lstlisting}
+
 \subsection{Conversion to python?}
 
 GBTIDL can be 'converted' to python in several ways:
@@ -136,10 +216,12 @@ GBTIDL can be 'converted' to python in several ways:
   keep the function names and functionality the same as much as possible,
     but use pyspeckit under the hood
 \item
-  same as 1), but literally  translating IDL -> python. A lot more work.
-    Functionally the same as  was done uniPOPS -> dish -> gbtidl it seems.
+  same as 1), but literally  translating IDL to python. A lot more work.
+  Functionally the same as  was done uniPOPS to dish to gbtidl it seems.
+  This would add just one more in the chain.
 \item
-  using pyspeckit natively. raw python power.
+  using pyspeckit natively. raw python power. This is possibly a harder way for
+  existing users to switch to and accept. Might as well force CLASS on them.
 \item
   bringing the sdfits interfaces that gbt-pipeline uses into the loop.
 probably not useful to 1) , but could be useful for 2)
@@ -177,7 +259,7 @@ There appear to be some SDFITS ``dialect'' issues between these files that need 
 
 \section{Other Software}
 
-Here we describe existing software packages.
+Here we describe related software packages which could have an impact on the design:
 
 \subsection{comb}
 
@@ -273,7 +355,37 @@ xf - Transfer stacks to directory 2 after making them unique (1/position)
 \end{verbatim}
 \normalsize
 
- 
+\subsection{SpecX}
+
+This is a pretty old package, lives within Starlink? Was used on JCMT. It's
+basis is  RPN arithmetic and a stack. It seems to have a rich interactive
+plotting interface. I've only found VMS based manuals,
+but internally has its own command language.
+
+Some example commands:
+\footnotesize\begin{verbatim}
+
+read-spectrum \1\27
+
+open-fits-file
+write-fits-spectrum
+close-fits-file
+
+multiply-spectrum 5.1 ; offset-spectrum 2; new-plot
+
+clip-spectrum
+drop-channels
+invert-spectrum
+remove-spikes
+set-channels
+truncate-spectrum
+
+remove-linear-baseline
+
+
+\end{verbatim}
+\normalsize
+
 \subsection{UniPOPS}
 the pre-historic program on which everything (DISH, GBTIDL) seems to be based
 \url{https://www.cv.nrao.edu/unipops/}
@@ -287,7 +399,9 @@ DISH was based on uniPOPS. ADASS 1999(?) has several papers dedicated to dish:
 
 (AIPS++ and glish):  https://safe.nrao.edu/wiki/bin/view/GB/Data/DishUsersGuideForGBT
 
-       Note that GBTIDL derived all the functionality from DISH, which in itself was derived from UniPOPS
+Note that GBTIDL derived all the functionality from DISH, which in itself was derived from UniPOPS,
+but DISH has a gridder.
+
        scan  - integrations 
 
 \subsection{CASA/sd}
@@ -635,11 +749,11 @@ def myscale(g, factor=1.0):
     # if !g.frozen eq 0 then show
 \end{lstlisting}
 
-\section{Questions}
+\section{Questions/Problems}
 
 \begin{enumerate}
 
-\item comb
+\item legacy packages like comb and SPECX : do they have interesting functionality not seen elsewhere?
 
 \item class acts like a database, so it's easy to make selections and operate on those (e.g. gridding)
   In GBTIDL there is the {\it ???} command which reads all spectra from a directory and is able
@@ -650,8 +764,11 @@ def myscale(g, factor=1.0):
 
 \item  data simulator (also useful for optimizing gridding options) - pointed vs. OTF
 
+\item how is ARGUS different?
 
-\item pulsar timing data?
+\item Tony Wong's EDGE data  
+
+\item pulsar timing data - we don't deal with this.
   
 \end{enumerate}
 
@@ -678,6 +795,7 @@ The following software has been discussed in this paper (where available, we use
 \item gbtpipe \url{https://github.com/GBTSpectroscopy/gbtpipe}
 \item AIPS \url{https://ascl.net/9911.003}
 \item ParselTongue \url{https://ascl.net/1208.020}
+\item SpecX \url{https://ascl.net/1310.008}
 \end{enumerate}
 
 \bibliographystyle{unsrt}
