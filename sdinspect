@@ -66,8 +66,15 @@ def filter2(data, n=5):
 vmin = None
 vmax = None
 
+if len(sys.argv) == 1:
+    print("Usage: %s sdfitsfile" % sys.argv[0])
+    sys.exit(1)
+
 
 sdfits=sys.argv[1]
+if not os.path.exists(sdfits):
+    print("File does not exist: ",sdfits)
+    sys.exit(1)
 
 
 read_gpar(sdfits)
@@ -94,6 +101,9 @@ print("Found %d spectra" % nint)
 
 for i in range(nint):
     sp = sp0[i]
+    #stats = sp.stats(statrange=(3000,4000))
+    stats = sp.stats()
+    print(stats)
     sp.xarr.convert_to_unit('km/s')
     # sp.data = filter1(sp.data)
     sp.plotter(xmin=vmin,xmax=vmax)
