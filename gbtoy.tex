@@ -67,7 +67,7 @@
 
 \centerline{Peter Teuben (University of Maryland, USA)}
 
-\centerline{Version 0.1 - \today}
+\centerline{Version 0.2 - \today}
 \bigskip
 
 \section{Overview}
@@ -81,18 +81,19 @@ The current data formats is SDFITS, and will continue to be used.
 
 We will however take this opportunity to review the whole workflow of
 single dish data processing from the astronomers' point of view, by
-comparing functionality offered in other packages such as {\tt comb}, {\tt SPECX},
-and {\tt CLASS}. The predecessors of {\tt GBTIDL} are {\tt DISH}
-(under AIPS++) and before that {\tt uniPOPS}. At the current time
-(2019 as we write this), python is the most likely candidate for an
-data processing package dealing with single dish data. Given usage of
-jupyter notebooks, it would also be nice if any new efforts could make
-use of this.
+comparing functionality offered in other packages such as {\tt comb},
+{\tt SPECX}, and {\tt CLASS}. The predecessors of {\tt GBTIDL} are
+{\tt DISH} (under AIPS++) and before that {\tt uniPOPS}. They are largely
+functionally equivalent, just using other command processors. At the
+current time (2019 as we write this), python is the most likely
+candidate for a data processing package dealing with single dish
+data. Given usage of jupyter notebooks, it would also be nice if any
+new efforts could make use of this.
 
 \begin{figure}[h]
 \centering
   \includegraphics[width=\textwidth]{fig1.eps}
-\caption{\label{fig1} Evolution of the GBT analysis software}
+\caption{\label{fig1} Evolution of the GBT analysis software.}
 \end{figure}
 
 \section{Functionality}
@@ -102,9 +103,9 @@ package?
 
 \begin{itemize}
 
-\item Deal with spectra on an individual basis
+\item Deal with spectra on an individual (or group?) basis
   \begin{itemize}
-\item Visualize spectra, a versatile interacticve plotting tool is needed
+\item Visualize spectra, a versatile interactive plotting tool is needed
   that can handle overlaying fits and/or other spectra
 \item Calibrate spectra (Freq, Pos, Nod)
 
@@ -132,21 +133,23 @@ package?
 \item Does OTF have special needs?
 
 \item integrate well with a python eco-system. Many users are now familiar with
-  python, numpy etc.  If the code allows you to get and set numpy arrays the way
-  they like, that's a gain. It should also be useable via a the classic ``import''
-  mechanism, and expected to work well with packages such as astropy
+  python, numpy etc.  If the code allows us to get and set numpy arrays,
+  that's a gain. It should also be usable via a the classic ``import''
+  mechanism, and expected to work well with packages such as astropy and jupyter
+  notebooks. Use of widgets would be interesting too, but that's very notebook
+  specific.
 \end{itemize}
 
 
 \section{Existing GBT code}
 
-
-We are faced with 3 existing packages: GBTIDL, gbt-pipeline and
-gbtgridder, of which the latter two are already in python. There is also
-a derived product, gbtpipe, written by Rosolowsky. All codes are
-publicly available. The pulsar timing observations seem to follow
+We are faced with 3 existing packages: {\tt GBTIDL}, {\tt gbt-pipeline} and
+{\tt gbtgridder}, of which the latter two are already in python. There is also
+a derived product, {\tt gbtpipe}, written by Erik Rosolowsky. All codes are
+publicly available. Some code overlap has been noticed. The pulsar timing observations are
 in a completely different category, and will be ``ignored'' for the
-moment until we understand what to do with them.
+moment until we understand what to do with them. Another point to keep in mind is that
+the ``dialects'' that seem to exist in the SDFITS format are specific to the backend.
 
 Nomenclature of SD observations ({\it as found in one of the GBT manuals}):
 
@@ -155,12 +158,13 @@ Nomenclature of SD observations ({\it as found in one of the GBT manuals}):
   \item[{\bf session}] : same 'day' continguous in time
   \item[{\bf block}]   : observation unit
   \item[{\bf scan}]    : integrations that belong together (few mins)
-  \item[{\bf integration}] : integrtion of a specific state (pointing, band, polarizations, ...)
+  \item[{\bf integration}] : integration of a specific state (pointing, band, polarizations, ...)
 \end{itemize}   
 
 
 In addition there are several ways how to calibrate SD spectra, broadly separated
-into position and frequency switching. Calibration also depends on the instrument used.
+into position and frequency switching. Calibration also depends on the instrument used,
+and the SDFITS ``dialect'' will play a role in this.
 
 \begin{itemize}
 \item
@@ -178,13 +182,13 @@ the edges of the scans.
 
 \section{GBTIDL}
 
-As a reminder, here is the example from the GBTIDL Users' Guide, where you get
-a quick look and feel of the command line interface in GBTIDL:
+As a reminder, here is a example\footnote{taken from the GBTIDL Users' Guide}
+where you get a quick look and feel of the command line interface in GBTIDL:
 
 \begin{lstlisting}[language=bash]
 % gbtidl                         ; Start GBTIDL from the unix prompt
 
-GBTIDL -> filein                 ; Specify an input file using the file selection GUI
+GBTIDL -> filein, 'myraw.fits'   ; Specify an input SDFITS file
 GBTIDL -> summary                ; Give a summary of the scans in the opened data file
 GBTIDL -> getfs, 9               ; Retrieve, calibrate, and plot a frequency switched  
                                  ;  spectrum (other observing modes use different commands)
@@ -214,7 +218,7 @@ GBTIDL can be 'converted' to python in several ways:
 \begin{enumerate}
 \item
   keep the function names and functionality the same as much as possible,
-    but use pyspeckit under the hood
+    but use {\tt pyspeckit} under the hood
 \item
   same as 1), but literally  translating IDL to python. A lot more work.
   Functionally the same as  was done uniPOPS to dish to gbtidl it seems.
@@ -243,19 +247,24 @@ We have the following options:
 \begin{enumerate}
 
 \item
-  The 3 examples in the users' guide (ngc5291.fits, W3OH.fits, IC1481.fits)
+  The 3 examples in the users' guide (ngc5291.fits , W3OH.fits, IC1481.fits) [all 2005]
 \item
-  The 2 examples in the SDFITS standards page (TREG\_091209.cal.acs.fits, Parkes\_GASS.fits
+  The 2 examples in the SDFITS standards page (TREG\_091209.cal.acs.fits [2009], Parkes\_GASS.fits [2010?])
 \item
-  The example in the pyspeckit packate (3C286.fits)
+  The example in the pyspeckit packate (3C286.fits [2012])
+\item  
+  The 2nd example in the pyspeckit package, AGBT11B\_029\_01.raw.acs.fits, absent from archives , but I found a calibAGBT02C\_023\_03.fits [2005]
 \item
   M81/M82 2003 data as described on\newline
   \url{https://safe.nrao.edu/wiki/bin/view/GB/Data/M81ExampleExectution}
 \item
-  EDGE survey data via Tony Wong
+  EDGE survey data via Tony Wong [2016]
+\item
+  ARGUS data?
 \end{enumerate}
 
 There appear to be some SDFITS ``dialect'' issues between these files that need to be understood.
+{\tt pyspeckit} deals with very little variation.
 
 \section{Other Software}
 
@@ -282,24 +291,28 @@ Before we list the famous two-letter commands in {\tt comb}, first some nomencla
   
 \end{itemize}
 
+Here's the list of COMB commands.  They can be broadly put in two categories:
+system functionality which the python eco-system will solve for us (e.g. {\tt c},
+{\tt cm}, {\tt cp}, {\tt do} etc.) and which are functional tools to operate
+on spectra (e.g. {\tt ad}) which we'll need to check on how GBTIDL does this.
 
 \footnotesize\begin{verbatim}
-ad - Add scans to stack2
-af - Attach a FITS file to an image
-bc - Designate bad channels
-c - Calculate something
-ca - Calculate values from stacks
-cc - Change center channel
-cm - Space-space Contour Map
-co - Combine two stacks, result in 1 & 2
-cp - Contour Plot an image
-cr - Cursor read
-cv - Convolve stack 1 with stack 3
-da - Define an area of an image
-dm - Define macro
-do - Loop through a command string
-dv - Declare user Variables
-e - Execute a shell command
+ad - Add scans to stack2                          check
+af - Attach a FITS file to an image               check
+bc - Designate bad channels                       check
+c - Calculate something                      Py
+ca - Calculate values from stacks                 check
+cc - Change center channel                        check
+cm - Space-space Contour Map                 Pl
+co - Combine two stacks, result in 1 & 2          check
+cp - Contour Plot an image                   Pl
+cr - Cursor read                             Pl
+cv - Convolve stack 1 with stack 3                check
+da - Define an area of an image                   check
+dm - Define macro                            Py
+do - Loop through a command string           Py ?
+dv - Declare user Variables                  Py 
+e - Execute a shell command                  Py
 el - Eliminate bad chans in stack 1.
 em - Empty a stack
 fl - Flag location on graph
@@ -413,8 +426,38 @@ but DISH has a gridder.
 We have several experts locally: Alberto, Miguel/Andy, Maitraiyee
   
  https://www.iram.fr/IRAMFR/ARC/documents/filler/casa-gildas.pdf
-       http://www.iram.fr/IRAMFR/GILDAS/
-       and their new python interfaces:
+      http://www.iram.fr/IRAMFR/GILDAS/
+      and their new python interfaces:
+
+\subsection{NOD3}
+
+Seems to be used at Effelsberg.
+
+\subsection{AO IDL}
+
+Arecibo has their own IDL based data reduction package.
+
+Some info on \url{http://www.naic.edu/~astro/data/data_formats/idl/index.shtml}
+
+\section{Other Telescopes}
+
+Here's a brief inventory of what software is used at other SD telescopes
+\begin{itemize}
+  \item ALMA/TP 12m: CASA
+  \item APEX 12m: CLASS
+  \item Arecibo 305m: AO IDL
+  \item Effelsberg 100m:  NOD3, but also new python things (Winkel)
+  \item FAST 500m:
+  \item GBT 110m:  gbtidl
+  \item IRAM 30m: CLASS
+  \item JCMT 15m:
+  \item LMT 50m:
+  \item Lovelll 76m:
+  \item Nobeyama 45m:   casa?
+  \item Parkes 64m:
+  \item SRT 64m: GILDAS, SDI, SCUBE, 
+\end{itemize}       
+       
 
 \section{gbtoy}       
 
@@ -432,7 +475,7 @@ look and feel and get user feedback before we continue.
 Another way is to base the code more on pyspeckit, or really extend
 pyspeckit to make it cover the known GBTIDL cases.  Two GBT examples
 exist in pyspeckit-tests, and only 3C286 sort of works now, while
-jd\_test with AGBT11B\_02\_01.raw.acs.fits currently lacks the data.
+jd\_test with AGBT11B\_029\_01.raw.acs.fits currently lacks the data.
 Example test:  \url{https://github.com/pyspeckit/pyspeckit-tests/blob/master/test_3c286.py}
 
 A third way is to inspect the gbt-pipeline code. It has methods to
@@ -760,15 +803,13 @@ def myscale(g, factor=1.0):
   to handle that in the same fashion?
 
 \item   what could the role of aoflagger \cite{offringa-2012-morph-rfi-algorithm} be? Or is GBT already
-  using this?
+  using this? Does aoflagger understand SDFITS files
 
 \item  data simulator (also useful for optimizing gridding options) - pointed vs. OTF
 
 \item how is ARGUS different?
 
-\item Tony Wong's EDGE data  
-
-\item pulsar timing data - we don't deal with this.
+\item pulsar timing data - ignore for now?
   
 \end{enumerate}
 
@@ -787,6 +828,7 @@ The following software has been discussed in this paper (where available, we use
 \item aoflagger: \url{https://ascl.net/1010.017}
 \item CASA \url{https://ascl.net/1107.013}
 \item specutils: \url{https://ascl.net/1902.012}
+\item specviz: \url{https://ascl.net/1902.011}
 \item spectral-cube (within radio-astro-tools) \url{https://ascl.net/1609.017}
 \item Astropy \url{https://ascl.net/1304.002}
 \item SpecViz \url{https://ascl.net/1902.011}
@@ -796,6 +838,8 @@ The following software has been discussed in this paper (where available, we use
 \item AIPS \url{https://ascl.net/9911.003}
 \item ParselTongue \url{https://ascl.net/1208.020}
 \item SpecX \url{https://ascl.net/1310.008}
+\item NOD3 \url{https://ascl.net/1711.024}
+
 \end{enumerate}
 
 \bibliographystyle{unsrt}
