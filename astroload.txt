@@ -1,6 +1,6 @@
 (11-nov-2019)
 
-At maryland you can
+On UMD's 'astronet' computers you can:
 
       astroload gbt
 
@@ -50,3 +50,22 @@ keep
 in SHELL:
 
 sdinspect ngc5291-saved.fits
+
+
+in GBTIDL with the "keep" file:
+
+filein,'NGC2347.fits'
+getrec,0
+chan
+nregion,[6000,7500,8700,10200]    ; must be in channels
+nfit,6
+sety, 0.1, 0.2
+bshape
+baseline  
+sety, -0.1, 0.2
+velo
+setx, 3500, 5000
+hanning,/decimate  
+boxcar, 8
+annotate, 3800, 0.1, 'This is NGC 2347 from the EDGE survey', color=!blue, charsize=2.0
+
