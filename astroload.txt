@@ -21,7 +21,7 @@ Some data and pdf's relevant to the project are in /chara/teuben/GBT,
 perhaps I could move that into /astromake/opt/gbt somewhere.
 
 
-Here's a small excersize, taken from Example 1 in the Users' Guide:
+Here's a small exercize, taken from Example 1 in the Users' Guide:
 
 in GBTIDL:
 
