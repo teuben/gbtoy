@@ -15,7 +15,10 @@ specutils:
 	git clone https://github.com/astropy/specutils
 
 pyspeckit:
-	git clone https://github.com/pyspeckit/pyspeckitq
+	git clone https://github.com/pyspeckit/pyspeckit
+
+pyspeckit2:
+	git clone https://github.com/teuben/pyspeckit
 
 spectral-cube:
 	git clone https://github.com/radio-astro-tools/spectral-cube
