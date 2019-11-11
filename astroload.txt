@@ -1,0 +1,52 @@
+(11-nov-2019)
+
+At maryland you can
+
+      astroload gbt
+
+and you will get some tools for our GBT project.
+
+
+- gbtidl (yet the real IDL version)
+
+- a new python where we stuff packages we experiment with (e.g. pyspeckit)
+
+- the sdinspect (and possibly more), which uses pyspeckit to "look" at an SDFITS file.
+  It can fail!
+  My favorite galaxy is NGC2347.fits, it's already in the so-called IDL "keep" format,
+  meaning it's been calibrated.
+
+
+Some data and pdf's relevant to the project are in /chara/teuben/GBT,
+perhaps I could move that into /astromake/opt/gbt somewhere.
+
+
+Here's a small excersize, taken from Example 1 in the Users' Guide:
+
+in GBTIDL:
+
+filein, 'ngc5291.fits' 
+summary
+for i=51,57,2 do begin getps, i, plnum=0 & accum & end  
+for i=51,57,2 do begin getps, i, plnum=1 & accum & end  
+ave
+chan  
+nregion,[3300,14800,17900,31000]  
+nfit,3  
+sety, 0.2, 0.5  
+bshape  
+baseline  
+unzoom
+hanning,/decimate  
+bdrop, 2500 
+edrop, 2500 
+velo 
+stats, 2000, 3000  
+stats, 3900, 4800  
+boxcar, 8
+fileout, 'ngc5291-saved.fits'
+keep
+
+in SHELL:
+
+sdinspect ngc5291-saved.fits
