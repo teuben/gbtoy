@@ -19,12 +19,13 @@ pyspeckit:
 
 pyspeckit2:
 	git clone https://github.com/teuben/pyspeckit
+	(cd pyspeckit; git checkout teuben-gbt)
 
 spectral-cube:
 	git clone https://github.com/radio-astro-tools/spectral-cube
 
 gbt-pipeline:
-	git clone https://github.com/GreenBankObservatory/gbt-pipeline 
+	git clone https://github.com/GreenBankObservatory/gbt-pipeline
 
 gbtgridder:
 	git clone https://github.com/GreenBankObservatory/gbtgridder
