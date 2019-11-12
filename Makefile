@@ -24,6 +24,9 @@ pyspeckit2:
 spectral-cube:
 	git clone https://github.com/radio-astro-tools/spectral-cube
 
+statcont:
+	git clone https://github.com/radio-astro-tools/statcont
+
 gbt-pipeline:
 	git clone https://github.com/GreenBankObservatory/gbt-pipeline
 
