@@ -1,15 +1,16 @@
 #! /usr/bin/env python
-#
-#   inspect an SDFITS file, plot the spectrum it sees (could be > 1)
-#
-#   by comparison, in GBTIDL this is just 2 lines
-#
-# GBTIDL -> filein,'NGC2347.fits'
-# GBTIDL -> getrec,0
-#
-#   albeit in a plotter with some fancy astro options, but for those used
-#   to matplotlib, with terrible pan & zoom options.
 
+__doc__ = """
+   inspect an SDFITS file, plot the spectrum it sees (could be > 1)
+
+   by comparison, in GBTIDL this is 'just' 2 lines
+
+   GBTIDL -> filein,'NGC2347.fits'
+   GBTIDL -> getrec,0
+
+   albeit this will be in a plotter with some fancy astro options but
+   not so great pan and zoom. That's one thing where matplotlib shines.
+"""
 
 
 import os
@@ -78,6 +79,7 @@ vmax = None
 
 if len(sys.argv) == 1:
     print("Usage: %s sdfitsfile" % sys.argv[0])
+    print(__doc__)
     sys.exit(1)
 
 sdfits=sys.argv[1]
