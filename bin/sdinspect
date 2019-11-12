@@ -2,10 +2,14 @@
 #
 #   inspect an SDFITS file, plot the spectrum it sees (could be > 1)
 #
-#   by comparison, in GBTIDL this is 
+#   by comparison, in GBTIDL this is just 2 lines
 #
 # GBTIDL -> filein,'NGC2347.fits'
-# 
+# GBTIDL -> getrec,0
+#
+#   albeit in a plotter with some fancy astro options, but for those used
+#   to matplotlib, with terrible pan & zoom options.
+
 
 
 import os
@@ -115,4 +119,10 @@ for i in range(nint):
     # sp.data = filter1(sp.data)
     sp.plotter(xmin=vmin,xmax=vmax)
     sp.plotter.label(verbose_label=True)
+    if True:
+        # draw a red baseline at zero
+        xzero = sp.xarr.value
+        yzero = 0.0 * sp.data
+        pl.plot(xzero,yzero,'-',c='red')
+        
     pl.show()
