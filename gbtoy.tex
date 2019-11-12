@@ -238,7 +238,20 @@ need an embedded wxPython ot QtPython interface around it (or another
 GUI wrapper).  \url{https://docs.python.org/3/faq/gui.html}
 
 
-\subsection{Data / Possible Test Cases}
+\subsection{Data}
+
+\subsection{The SDFITS standard}
+
+Although there is an SDFITS standard, there are some clear dialect issues. For example,
+the pyspeckit 3C286.fits file does not work in GBTIDL. Also, the 3 standard examples
+from GBTIDL do not work in pyspeckit, because newer header items (e.g. TRGTLONG) are
+absent, because pyspeckit assumed them to be present. They are GBT specific.
+The number of GBT specific header elements has been steadily increasing. The 2005 data
+have about 46, there are 79 in the 2016 GBT EDGE data.
+
+The {\tt sdheader} script tries to assembles this knowledge.
+
+\subsection{Possible Test Cases}
 
 We will need some standard datasets that have known answers. They probably will come in SDFITS format.
 
