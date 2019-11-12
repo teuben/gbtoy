@@ -202,5 +202,10 @@ for i in range(1,len(hdu)):
                 elif h[:hd] not in h_fits2:
                     print('UNKNOWN2: ext header',h)            
                 # no need to show the indexed keywords
+    for i in range(ncols):
+        key = 'TTYPE%d' % (i+1)
+        h = header2[key]
+        if h not in h_sdfits:
+            print('UNKNOWN3: ext header',h)
 
 
