@@ -10,7 +10,10 @@
 #
 #   see also    https://safe.nrao.edu/wiki/bin/view/Main/SdfitsDetails   (2017, really 2007)
 #               https://casa.nrao.edu/aips2_docs/notes/236/node14.html   (2006)
-
+#
+#   This code also attempts to "register' all known header variables (virtual as well as full)
+#   but it would be better to wrap this into a class in the final GBT eco system.
+#
 
 
 import os
@@ -141,6 +144,24 @@ h_gbt =    ['EQUINOX',      # EPOCH?
             'SIG',
             'CAL',           # "T" means it's ON, 'F' it's OFF
             'CALTYPE',       # 2017    LOW or HIGH
+            'DOPFREQ',       # EDGE
+            'RADESYS',       # EDGE, note there is also a RADECSYS !!!
+            'FEEDXOFF',      # EDGE, note there is also a BEAMXOFF,BEAMEOFF
+            'FEEDEOFF',      # EDGE
+            'PROCSCAN',      # EDGE
+            'PROCTYPE',      # EDGE
+            'QD_XEL',        # EDGE
+            'QD_EL',         # EDGE
+            'QD_BAD',        # EDGE
+            'QD_METHOD',     # EDGE
+            'FOFFREF1',      # EDGE
+            'CALPOSITION',   # EDGE
+            'IFNUM',         # EDGE keep format only?
+            'PLNUM',         # EDGE .
+            'FDNUM',         # EDGE .
+            'INT',           # EDGE .
+            'NSAVE',         # EDGE .
+            'TWARM',
             ]
 
 h_parkes =  ['CYCLE',        # Mark Calabretta:
