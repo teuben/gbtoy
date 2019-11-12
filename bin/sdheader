@@ -191,6 +191,7 @@ for i in range(1,len(hdu)):
     nrows = header2['NAXIS2']
     ncols = header2['TFIELDS']
     print("SINGLE DISH %d rows x %d cols" % (nrows,ncols))
+    # check the keywords (some may be virtual columns)
     for h in header2.keys():
         if h not in h_fits1:
             if h in h_sdfits:
@@ -202,6 +203,7 @@ for i in range(1,len(hdu)):
                 elif h[:hd] not in h_fits2:
                     print('UNKNOWN2: ext header',h)            
                 # no need to show the indexed keywords
+    # check the column names (via TTYPEnnn)
     for i in range(ncols):
         key = 'TTYPE%d' % (i+1)
         h = header2[key]
