@@ -634,6 +634,13 @@ g.stats(3900, 4800)
 g.boxcar(8)
 \end{lstlisting}
 
+if you like the IDL one liners for for-loops:
+
+\begin{lstlisting}[language=python]
+  for i=g.range(51,57,2):     g.getps(i, plnum=0);     g.accum()
+\end{lstlisting}
+
+will work just as well.
 
 \subsection{Example 2: Frequency Switching}
 
@@ -807,9 +814,17 @@ def myscale(g, factor=1.0):
 
 \item  data simulator (also useful for optimizing gridding options) - pointed vs. OTF
 
+\item pulsar timing data - ignore for now.
+
+\item is it legal for SDFITS to have multiple extensions?  pyspeckit seems to ignore it.
+  YES, the 1995 Liszt paper spells out on p3. this is ok.
+
+\item support for multibeam instruments
+
 \item how is ARGUS different?
 
-\item pulsar timing data - ignore for now?
+\item re-using of user IDL code: how easy do they translate to GBTOY  
+  
   
 \end{enumerate}
 
