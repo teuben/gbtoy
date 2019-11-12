@@ -1,0 +1,174 @@
+#! /usr/bin/env python
+#
+#   inspect an SDFITS header on standards conformation
+#
+
+
+
+import os
+import sys
+import numpy as np
+from astropy.io import fits
+# -------------------------------------------------  deal with command line
+
+if len(sys.argv) == 1:
+    print("Usage: %s sdfitsfile" % sys.argv[0])
+    sys.exit(1)
+
+sdfits=sys.argv[1]
+if not os.path.exists(sdfits):
+    print("File does not exist: ",sdfits)
+    sys.exit(1)
+
+# -------------------------------------------------   script can start
+
+# known non-SDFITS 
+h_fits1 = ['SIMPLE',
+           'BITPIX',
+           'NAXIS',
+           'NAXIS1',
+           'NAXIS2',
+           'EXTEND',
+           'COMMENT',
+           'HISTORY',
+           'DATE',
+           'ORIGIN',
+           'INSTRUME',
+           'SDFITVER',
+           'FITSVER',       # GUIDEVER has also been seen
+           'END',
+           'XTENSION',
+           'EXTNAME',
+           'PCOUNT',
+           'GCOUNT',
+           'TFIELDS',
+          ]
+
+# indexed keywords
+h_fits2 = ['TTYPE',
+           'TFORM',
+           'TUNIT',
+           'TDIM',
+          ]   
+
+h_core = ['BANDWID',      #
+          'DATA',
+          'DATE-OBS',     #
+          'EXPOSURE',     #  what about DURATION
+          'OBJECT',       #
+          'TELESCOP',     #
+          'TSYS',         #
+          ]
+
+h_shared = ['OBSERVER',
+            'OBSID',
+            'PROJID',
+            'SCAN',
+            'OBSMODE',
+            'MOLECULE',
+            'TRANSITI',
+            'FRONTEND',
+            'BACKEND',
+            'TEMPSCAL',
+            'TCAL',
+            'THOT',
+            'TCOLD',
+            'TRX',
+            'FREQRES',
+            'VELDEF',
+            'VFRAME',
+            'RVSYS',
+            'OBSFREQ',
+            'IMAGFREQ',
+            'RESTFREQ',
+            'TIMESYS',
+            'LST',
+            'AZIMUTH',
+            'ELEVATIO',
+            'TAU',
+            'TAUIMAGE',
+            'TAUZENIT',
+            'BEAMEFF',
+            'APEREFF',
+            'ETAL',
+            'ETAFSS',
+            'ANTGAIN',
+            'BMAJ',
+            'BMIN',
+            'BPA',
+            'SITELONG',
+            'SITELAT',
+            'SITEELEV',
+            'HUMIDITY',
+            'DEWPOINT',
+            'TAMBIENT',
+            'PRESSURE',
+            'WINDSPEE',
+            'WINDDIRE',
+            ]
+
+h_gbt =    ['EQUINOX',
+            'SAMPLER',
+            'FEED',
+            'SRFEED',
+            'BEAMXOFF',
+            'BEAMEOFF',
+            'SIDEBAND',
+            'PROCSEQN',      # scan sequence number
+            'PROCSIZE',      # number of scans in procedure
+            'LASTON',
+            'LASTOFF',
+            'VELOCITY',
+            'SIG',
+            'CAL',
+            ]
+
+h_sdfits = h_core + h_shared + h_gbt
+
+
+hdu = fits.open(sdfits)
+print("Found %d HDU's" % len(hdu))
+
+
+print("There are %2d known CORE   columns" % len(h_core))
+print("There are %2d known SHARED columns" % len(h_shared))
+print("There are %2d known GBT    columns" % len(h_gbt))
+
+def first_digit(key):
+    for i, c in enumerate(key):
+        if c.isdigit():
+            return i
+    return -1
+    
+header1 = hdu[0].header
+for h in header1.keys():
+    if h not in h_fits1:
+        if h in h_sdfits:
+            print('SDFITS:  Primary header',h)
+        else:
+            print('UNKNOWN: Primary header',h)
+          
+
+h = hdu[1].header
+extname = h['EXTNAME']
+if extname != 'SINGLE DISH':
+    print('%s is not a SINGLE DISH extension' % extname)
+    sys.exit(1)
+
+for i in range(1,len(hdu)):
+    header2 = hdu[i].header
+    extname = header2['EXTNAME']    
+    print("HDU-%d %s" % (i+1, extname))
+    for h in header2.keys():
+        if h not in h_fits1:
+            if h in h_sdfits:
+                print('SDFITS:  ext header',h)
+            else:
+                hd = first_digit(h)
+                if hd < 0:
+                    print('UNKNOWN1: ext header',h)
+                elif h[:hd] not in h_fits2:
+                    print('UNKNOWN2: ext header',h)            
+                # no need to show the indexed keywords
+
+
