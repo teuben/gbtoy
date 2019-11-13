@@ -30,6 +30,10 @@ statcont:
 gbt-pipeline:
 	git clone https://github.com/GreenBankObservatory/gbt-pipeline
 
+gbt-pipeline2:
+	git clone https://github.com/teuben/gbt-pipeline
+	(cd gbt-pipeline; git checkout python3)
+
 gbtgridder:
 	git clone https://github.com/GreenBankObservatory/gbtgridder
 
