@@ -190,20 +190,28 @@ print("SDFITS: There are %2d known CORE   columns" % len(h_core))
 print("SDFITS: There are %2d known SHARED columns" % len(h_shared))
 print("SDFITS: There are %2d known GBT    columns" % len(h_gbt))
 
-def first_digit(key):
+def first_digit_index(key):
     for i, c in enumerate(key):
         if c.isdigit():
             return i
     return -1
 
-def inta(value):
-    """  converts strings such as "123E' to integers
+def inta1(value):
+    """  converts strings such as "123BLA' to an integer (123)
     """
     # add 'X' to make sure strings such as "123" also convert
     for i, c in enumerate(value+'X'):
         if not c.isdigit():
             break
     return int(value[:i])
+
+def inta2(value):
+    """  converts strings such as "BLA123' to an integer (123)
+    """
+    for i, c in enumerate(value):
+        if c.isdigit():
+            return int(value[i:])
+    return -1
     
     
 header1 = hdu[0].header
@@ -213,10 +221,12 @@ for h in header1.keys():
             print('SDFITS:   Pri header',h)
         else:
             print('UNKNOWN1: Pri header',h)
+
           
 for i in range(1,len(hdu)):
     header2 = hdu[i].header
-    extname = header2['EXTNAME']    
+    extname = header2['EXTNAME']
+    tdim = None
     print("HDU-%d %s" % (i+1, extname))
     if extname != 'SINGLE DISH':
         print('%s is not a SINGLE DISH extension - skipping' % extname)
@@ -227,12 +237,15 @@ for i in range(1,len(hdu)):
     for h in header2.keys():
         if header2[h] == 'DATA':
             h1 = h.replace('TTYPE','TFORM')
-            nchan = inta(header2[h1])
+            h2 = h.replace('TTYPE','TFORM')
+            i1 = inta2(h)
+            tdim = 'TDIM%d' % i1
+            nchan = inta1(header2[h1])
         if h not in h_fits1:
             if h in h_sdfits:
                 print('SDFITS:  Ext header',h)
             else:
-                hd = first_digit(h)
+                hd = first_digit_index(h)
                 if hd < 0:
                     print('UNKNOWN1: Ext header',h)
                 elif h[:hd] not in h_fits2:
@@ -244,6 +257,13 @@ for i in range(1,len(hdu)):
         h = header2[key]
         if h not in h_sdfits:
             print('UNKNOWN3: Ext header',h)
-    print("HDU-%d SINGLE DISH %d rows x %d cols x %d chans" % (i+1,nrows,ncols,nchan))
+    if tdim != None:
+        if tdim in header2:
+            datadim = header2[tdim]
+        else:
+            datadim = hdu[i].data[0][tdim]
+    else:
+        datadim = ""
+    print("HDU-%d SINGLE DISH %d rows x %d cols x %d chans %s" % (i+1,nrows,ncols,nchan,datadim))
 
 
