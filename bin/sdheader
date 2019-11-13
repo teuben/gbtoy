@@ -195,14 +195,24 @@ def first_digit(key):
         if c.isdigit():
             return i
     return -1
+
+def inta(value):
+    """  converts strings such as "123E' to integers
+    """
+    # add 'X' to make sure strings such as "123" also convert
+    for i, c in enumerate(value+'X'):
+        if not c.isdigit():
+            break
+    return int(value[:i])
+    
     
 header1 = hdu[0].header
 for h in header1.keys():
     if h not in h_fits1:
         if h in h_sdfits:
-            print('SDFITS:  Primary header',h)
+            print('SDFITS:   Pri header',h)
         else:
-            print('UNKNOWN: Primary header',h)
+            print('UNKNOWN1: Pri header',h)
           
 for i in range(1,len(hdu)):
     header2 = hdu[i].header
@@ -213,24 +223,27 @@ for i in range(1,len(hdu)):
         continue
     nrows = header2['NAXIS2']
     ncols = header2['TFIELDS']
-    print("SINGLE DISH %d rows x %d cols" % (nrows,ncols))
     # check the keywords (some may be virtual columns)
     for h in header2.keys():
+        if header2[h] == 'DATA':
+            h1 = h.replace('TTYPE','TFORM')
+            nchan = inta(header2[h1])
         if h not in h_fits1:
             if h in h_sdfits:
-                print('SDFITS:  ext header',h)
+                print('SDFITS:  Ext header',h)
             else:
                 hd = first_digit(h)
                 if hd < 0:
-                    print('UNKNOWN1: ext header',h)
+                    print('UNKNOWN1: Ext header',h)
                 elif h[:hd] not in h_fits2:
-                    print('UNKNOWN2: ext header',h)            
+                    print('UNKNOWN2: Ext header',h)            
                 # no need to show the indexed keywords
     # check the column names (via TTYPEnnn)
-    for i in range(ncols):
-        key = 'TTYPE%d' % (i+1)
+    for j in range(ncols):
+        key = 'TTYPE%d' % (j+1)
         h = header2[key]
         if h not in h_sdfits:
-            print('UNKNOWN3: ext header',h)
+            print('UNKNOWN3: Ext header',h)
+    print("HDU-%d SINGLE DISH %d rows x %d cols x %d chans" % (i+1,nrows,ncols,nchan))
 
 
