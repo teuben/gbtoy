@@ -183,12 +183,12 @@ h_sdfits = h_core + h_shared + h_gbt
 
 
 hdu = fits.open(sdfits)
-print("Found %d HDU's" % len(hdu))
+print(hdu.info())
 
 
-print("There are %2d known CORE   columns" % len(h_core))
-print("There are %2d known SHARED columns" % len(h_shared))
-print("There are %2d known GBT    columns" % len(h_gbt))
+print("SDFITS: There are %2d known CORE   columns" % len(h_core))
+print("SDFITS: There are %2d known SHARED columns" % len(h_shared))
+print("SDFITS: There are %2d known GBT    columns" % len(h_gbt))
 
 def first_digit(key):
     for i, c in enumerate(key):
