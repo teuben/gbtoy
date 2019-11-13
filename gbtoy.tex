@@ -70,6 +70,28 @@
 \centerline{Version 0.2 - \today}
 \bigskip
 
+\section{Introduction for non-SD users}
+
+Here we discuss a Single Dish (SD) data analysis package.  SD data are
+much easier to understand than most other astronomical formats,
+yet they can exhibit as much complexity as associated with other formats.
+
+On the top level they are just a ``collection'' of spectra, where a
+spectrum is a 1-dimensional array\footnote{to already confuse the
+  reader, some spectra of length N are viewed multi-dimensional, and
+  become (N/2, 2, 1, 1)}. Each spectrum has meta-data that describe
+where and how the data was taken. Of course position on sky and
+frequency setting, but another 40-80 extra variables are not uncommon,
+and although there is a standard for this, many variables wind up to be telescope
+specific. In the past a simple stack based spectrum calculator was the
+basic data analysis system. Even more modern systems are essentially
+still of this nature.
+ 
+For a collection of spectra that cover an area of the sky (the modern
+term is ``On-The-Fly'' (OTF) mapping, another step can be taken after
+the spectra have been calibrated, and that is gridding and mapping
+(imaging) these spectra into an image cube.
+
 \section{Overview}
 
 The GBT/GBO single dish processing software is reviewed in light of
@@ -105,17 +127,12 @@ package?
 
 \item Deal with spectra on an individual (or group?) basis
   \begin{itemize}
-\item Visualize spectra, a versatile interactive plotting tool is needed
+  \item Visualize spectra, a versatile interactive plotting tool is needed
   that can handle overlaying fits and/or other spectra
-\item Calibrate spectra (Freq, Pos, Nod)
-
-\item Flagging/Masking data
-
-\item Edit header (e.g. to fix problems)  
-
-\item Fit models to spectra
-
-
+  \item Calibrate spectra (Freq, Pos, Nod)
+  \item Flagging/Masking data
+  \item Edit header (e.g. to fix problems)  
+  \item Fit models to spectra
   \end{itemize}
 
 
@@ -186,59 +203,61 @@ As a reminder, here is a example\footnote{taken from the GBTIDL Users' Guide}
 where you get a quick look and feel of the command line interface in GBTIDL:
 
 \begin{lstlisting}[language=bash]
-% gbtidl                         ; Start GBTIDL from the unix prompt
-
+% gbtidl                         # Start GBTIDL from the unix prompt
 GBTIDL -> filein, 'myraw.fits'   ; Specify an input SDFITS file
 GBTIDL -> summary                ; Give a summary of the scans in the opened data file
-GBTIDL -> getfs, 9               ; Retrieve, calibrate, and plot a frequency switched  
-                                 ;  spectrum (other observing modes use different commands)
-
+GBTIDL -> getfs, 9               ; Retrieve, calibrate, and plot a freq. switched spectrum
 GBTIDL -> setregion              ; Set region used to determine baseline
 GBTIDL -> nfit,2                 ; Specify that a 2nd order baseline will be used
 GBTIDL -> baseline               ; Fit and subtract a baseline
-
-GBTIDL -> fitgauss               ; Fit a Gaussian profile to the plotted spectrum.  The mouse
-                                 ;  is used to set initial guesses
-
-GBTIDL -> stats                  ; For the displayed spectrum, show statistics such as
-                                 ; the RMS, maximum and minimum x and y values
+GBTIDL -> fitgauss               ; Fit a Gaussian profile to the plotted spectrum.
+GBTIDL -> stats                  ; show statistics for the spectrum
 GBTIDL -> print_ps               ; Write the current spectrum to a postscript file
-
 GBTIDL -> fileout, 'mydata.fits' ; Specify the output file name for saved data
 GBTIDL -> keep                   ; Save the spectrum currently displayed
-		    
 GBTIDL -> exit                   ; Exit GBTIDL
 
 \end{lstlisting}
 
+\begin{figure}[h]
+\centering
+  \includegraphics[width=\textwidth]{gbtidl1.png}
+\caption{\label{fig2} Example GBTIDL spectrum after baseline}
+\end{figure}
+
+
 \subsection{Conversion to python?}
 
-GBTIDL can be 'converted' to python in several ways:
+GBTIDL can be converted to python in several ways:
 
 \begin{enumerate}
 \item
   keep the function names and functionality the same as much as possible,
     but use {\tt pyspeckit} under the hood
+
 \item
   same as 1), but literally  translating IDL to python. A lot more work.
   Functionally the same as  was done uniPOPS to dish to gbtidl it seems.
-  This would add just one more in the chain.
+
 \item
   using pyspeckit natively. raw python power. This is possibly a harder way for
   existing users to switch to and accept. Might as well force CLASS on them.
+  
 \item
   bringing the sdfits interfaces that gbt-pipeline uses into the loop.
-probably not useful to 1) , but could be useful for 2)
+  probably not useful to 1) , but could be useful for 2)
 
 \end{enumerate}
 
 Either way, the peculiar graphics display that GBTIDL is using should
-be investigated if pure matplotlib has this functionality, or do we
+be investigated if pure matplotlib has enough functionality, or do we
 need an embedded wxPython ot QtPython interface around it (or another
 GUI wrapper).  \url{https://docs.python.org/3/faq/gui.html}
+Do we need the Model-View-Controller (MVC) approach, or can we call
+matplotlib where needed.
 
 
-\subsection{Data}
+\section{Data}
 
 \subsection{The SDFITS standard}
 
@@ -251,7 +270,7 @@ have about 46, there are 79 in the 2016 GBT EDGE data.
 
 The {\tt sdheader} script tries to assembles this knowledge.
 
-\subsection{Possible Test Cases}
+\subsection{Regression testing}
 
 We will need some standard datasets that have known answers. They probably will come in SDFITS format.
 
@@ -277,7 +296,8 @@ We have the following options:
 \end{enumerate}
 
 There appear to be some SDFITS ``dialect'' issues between these files that need to be understood.
-{\tt pyspeckit} deals with very little variation.
+{\tt pyspeckit} deals with very little variation at the moment. But mysteriously GBTIDL doesn't understand the
+testcase that comes with {\tt pyspeckit}.
 
 \section{Other Software}
 
@@ -381,7 +401,7 @@ xf - Transfer stacks to directory 2 after making them unique (1/position)
 \end{verbatim}
 \normalsize
 
-\subsection{SpecX}
+\subsection{SPECX}
 
 This is a pretty old package, lives within Starlink? Was used on JCMT. It's
 basis is  RPN arithmetic and a stack. It seems to have a rich interactive
@@ -408,17 +428,17 @@ truncate-spectrum
 
 remove-linear-baseline
 
-
 \end{verbatim}
 \normalsize
 
 \subsection{UniPOPS}
-the pre-historic program on which everything (DISH, GBTIDL) seems to be based
+
+This is the pre-historic program on which everything (DISH, GBTIDL) seems to be based
 \url{https://www.cv.nrao.edu/unipops/}
 
 
 \subsection{DISH}
-DISH was based on uniPOPS. ADASS 1999(?) has several papers dedicated to dish:
+DISH was based on uniPOPS. The 1999 ADASS has several papers dedicated to {\tt dish}:
 \cite{2000ASPC..216..498G},
 \cite{2000ASPC..216..494G}, and 
 \cite{2000ASPC..216..243G}.
@@ -426,14 +446,18 @@ DISH was based on uniPOPS. ADASS 1999(?) has several papers dedicated to dish:
 (AIPS++ and glish):  https://safe.nrao.edu/wiki/bin/view/GB/Data/DishUsersGuideForGBT
 
 Note that GBTIDL derived all the functionality from DISH, which in itself was derived from UniPOPS,
-but DISH has a gridder.
+but DISH has a gridder, and since this is a complete package, this will be interesting to study.
 
-       scan  - integrations 
+%       scan  - integrations 
 
 \subsection{CASA/sd}
-  there is an SD package, which originated with the Nobeyama 45m\newline
+
+
+CASA has an SD package, which originated with the Nobeyama 45m\newline
   \url{https://casa.nrao.edu/casadocs/casa-5.4.1/single-dish-calibration/single-dish-data-calibration-and-reduction}
 
+% https://casa.nrao.edu/casadocs/casa-5.6.0/imaging/single-dish-imaging
+  
 \subsection{CLASS}
 
 We have several experts locally: Alberto, Miguel/Andy, Maitraiyee
@@ -465,9 +489,9 @@ Here's a brief inventory of what software is used at other SD telescopes
   \item IRAM 30m: CLASS
   \item JCMT 15m:
   \item LMT 50m:
-  \item Lovelll 76m:
+  \item Lovell (Jodrell Bank) 76m:
   \item Nobeyama 45m:   casa?
-  \item Parkes 64m:
+  \item Parkes 64m:xs
   \item SRT 64m: GILDAS, SDI, SCUBE, 
 \end{itemize}       
        
@@ -872,5 +896,22 @@ The following software has been discussed in this paper (where available, we use
 
 \bibliographystyle{unsrt}
 \bibliography{gbtoy}
+
+\section*{Appendix A}
+
+Here is summary of the initial work packages and deliverables for the first 3 months.
+\subsection{Work packages}
+
+1) Survey current python codes (pyspeckit, specutils)
+
+2) Survey current SD packages for functionality (comb, CLASS, NOD3, casa)
+
+3) Design Document
+
+\subsection{Deliverables}
+
+1) Results of WP1 and WP2 in a white paper [early Dec 2019]
+
+2) Design Document with two use cases (PS,FS) for a PDR with GBO.
 
 \end{document}
