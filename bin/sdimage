@@ -1,0 +1,250 @@
+#! /usr/bin/env python
+
+
+
+__doc__ = """
+   Convert SDFITS to FITS image. Each spectrum is stacked.
+   Thus the final image is nchan x nrows (see sdheader)
+"""
+
+
+import os
+import sys
+import numpy as np
+from astropy.io import fits
+# -------------------------------------------------  deal with command line
+
+if len(sys.argv) == 1:
+    print("Usage: %s sdfitsfile" % sys.argv[0])
+    print(__doc__)
+    sys.exit(1)
+
+sdfits=sys.argv[1]
+if not os.path.exists(sdfits):
+    print("File does not exist: ",sdfits)
+    sys.exit(1)
+
+# -------------------------------------------------   script can start
+
+# fits known non-SDFITS 
+h_fits1 = ['SIMPLE',
+           'BITPIX',
+           'NAXIS',
+           'NAXIS1',
+           'NAXIS2',
+           'EXTEND',
+           'COMMENT',
+           'HISTORY',
+           'DATE',
+           'ORIGIN',
+           'INSTRUME',
+           'SDFITVER',
+           'FITSVER',       # GUIDEVER has also been seen
+           'END',
+           'XTENSION',
+           'EXTNAME',
+           'PCOUNT',
+           'GCOUNT',
+           'TFIELDS',
+          ]
+
+# fits indexed keywords
+h_fits2 = ['TTYPE',
+           'TFORM',
+           'TUNIT',
+           'TDIM',
+          ]   
+
+# core keywords (required)
+h_core = ['BANDWID',      #-
+          'DATA',
+          'DATE-OBS',     #-
+          'EXPOSURE',     #-  what about DURATION
+          'OBJECT',       #-
+          'TELESCOP',     #-
+          'TSYS',         #-
+                          # FREQRES ?
+                          # TIME is old, now DATA-OBS has the 2005-06-28T08:56:38.00 type notation
+          ]
+
+# shared keywords
+h_shared = ['OBSERVER',
+            'OBSID',
+            'PROJID',
+            'SCAN',
+            'OBSMODE',
+            'MOLECULE',
+            'TRANSITI',
+            'FRONTEND',  #-
+            'BACKEND',   #-
+            'TEMPSCAL',
+            'TCAL',
+            'THOT',
+            'TCOLD',
+            'TRX',
+            'FREQRES',    #  was core in 1995, 2000 says shared
+            'VELDEF',
+            'VFRAME',     # where is VCORR
+            'RVSYS',      # where is VCORR
+            'OBSFREQ',
+            'IMAGFREQ',
+            'RESTFREQ',
+            'TIMESYS',    # ?
+            'LST',
+            'AZIMUTH',
+            'ELEVATIO',
+            'TAU',
+            'TAUIMAGE',
+            'TAUZENIT',
+            'BEAMEFF',
+            'APEREFF',
+            'ETAL',
+            'ETAFSS',
+            'ANTGAIN',
+            'BMAJ',
+            'BMIN',
+            'BPA',
+            'SITELONG',
+            'SITELAT',
+            'SITEELEV',
+            'HUMIDITY',
+            'DEWPOINT',
+            'TAMBIENT',
+            'PRESSURE',
+            'WINDSPEE',
+            'WINDDIRE',
+            ]
+
+# site specific
+h_gbt =    ['EQUINOX',      # EPOCH?
+            'RADECSYS',     # 2017
+            'TRGTLONG',     # 2017
+            'TRGTLAT',      # 2017
+            'SAMPLER',
+            'FEED',
+            'SRFEED',
+            'BEAMXOFF',
+            'BEAMEOFF',
+            'SUBREF_STATE',  # 2017
+            'SIDEBAND',
+            'PROCSEQN',      # scan sequence number
+            'PROCSIZE',      # number of scans in procedure
+            'LASTON',
+            'LASTOFF',
+            'TIMESTAMP',     # 2017     "YYYY_MM_DD_HH:MM:SS".
+            'VELOCITY',
+            'ZEROCHAN',      # 2017
+            'SIG',
+            'CAL',           # "T" means it's ON, 'F' it's OFF
+            'CALTYPE',       # 2017    LOW or HIGH
+            'DOPFREQ',       # EDGE
+            'RADESYS',       # EDGE, note there is also a RADECSYS !!!
+            'FEEDXOFF',      # EDGE, note there is also a BEAMXOFF,BEAMEOFF
+            'FEEDEOFF',      # EDGE
+            'PROCSCAN',      # EDGE
+            'PROCTYPE',      # EDGE
+            'QD_XEL',        # EDGE
+            'QD_EL',         # EDGE
+            'QD_BAD',        # EDGE
+            'QD_METHOD',     # EDGE
+            'FOFFREF1',      # EDGE
+            'CALPOSITION',   # EDGE
+            'IFNUM',         # EDGE keep format only?
+            'PLNUM',         # EDGE .
+            'FDNUM',         # EDGE .
+            'INT',           # EDGE .
+            'NSAVE',         # EDGE .
+            'TWARM',
+            ]
+
+h_parkes =  ['CYCLE',        # Mark Calabretta:
+             'BEAM',         #   considers these critical
+             'IF',           #   presumably for Parkes?
+            ]
+
+h_arecibo = []               # rumors on some WCS usages
+
+# Tom Kuiper kuiper at jpl.nasa.gov - DSN spectroscopic runs to produce compatible SDFITS files
+# DSS-28 can simultaneously have both polarizations at, for example, 3, 6, 9 and 12 GHz.
+#
+#
+
+
+h_sdfits = h_core + h_shared + h_gbt
+
+
+hdu = fits.open(sdfits)
+print("Found %d HDU's" % len(hdu))
+
+
+print("There are %2d known CORE   columns" % len(h_core))
+print("There are %2d known SHARED columns" % len(h_shared))
+print("There are %2d known GBT    columns" % len(h_gbt))
+
+def first_digit(key):
+    for i, c in enumerate(key):
+        if c.isdigit():
+            return i
+    return -1
+
+def inta(value):
+    """  converts strings such as "123E' to integers
+    """
+    # add 'X' to make sure strings such as "123" also convert
+    for i, c in enumerate(value+'X'):
+        if not c.isdigit():
+            break
+    return int(value[:i])
+    
+    
+header1 = hdu[0].header
+for h in header1.keys():
+    if h not in h_fits1:
+        if h in h_sdfits:
+            print('SDFITS:   Pri header',h)
+        else:
+            print('UNKNOWN1: Pri header',h)
+          
+for i in range(1,len(hdu)):
+    header2 = hdu[i].header
+    extname = header2['EXTNAME']    
+    print("HDU-%d %s" % (i+1, extname))
+    if extname != 'SINGLE DISH':
+        print('%s is not a SINGLE DISH extension - skipping' % extname)
+        continue
+    nrows = header2['NAXIS2']
+    ncols = header2['TFIELDS']
+    # check the keywords (some may be virtual columns)
+    for h in header2.keys():
+        if header2[h] == 'DATA':
+            h1 = h.replace('TTYPE','TFORM')
+            nchan = inta(header2[h1])
+        if h not in h_fits1:
+            if h in h_sdfits:
+                print('SDFITS:  Ext header',h)
+            else:
+                hd = first_digit(h)
+                if hd < 0:
+                    print('UNKNOWN1: Ext header',h)
+                elif h[:hd] not in h_fits2:
+                    print('UNKNOWN2: Ext header',h)            
+                # no need to show the indexed keywords
+    # check the column names (via TTYPEnnn)
+    for j in range(ncols):
+        key = 'TTYPE%d' % (j+1)
+        h = header2[key]
+        if h not in h_sdfits:
+            print('UNKNOWN3: Ext header',h)
+    print("HDU-%d SINGLE DISH %d rows x %d cols x %d chans" % (i+1,nrows,ncols,nchan))
+    data2 = np.zeros(nchan*nrows).reshape(nrows,nchan)
+    d = hdu[i].data
+    for j in range(nrows):
+        data2[j] = d[j]['DATA']
+    hdu2 = fits.PrimaryHDU(data2)
+    hdul = fits.HDUList([hdu2])
+    fname = sdfits.replace('.fits','_%d.fits' % (i+1))
+    print("Writing ",fname)
+    hdul.writeto(fname)
+    
+
+
