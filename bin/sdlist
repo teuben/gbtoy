@@ -1,0 +1,59 @@
+#! /usr/bin/env python
+
+__doc__ = """
+   Inspect an SDFITS (sometimes called SDF) header on standards conformation
+   An SDFITS files is just a Multi-Extension FITS (MEF) files, which extensions
+   (it can have 1 or more) must have extention name  'SINGLE DISH'
+
+   standard!  what standard?
+
+   Also note that Harvey's 1995 sdfits document is "somewhat" out of date (e.g. y2k, FREQRES)
+
+   see also    https://safe.nrao.edu/wiki/bin/view/Main/SdfitsDetails   (2017, really 2007)
+               https://casa.nrao.edu/aips2_docs/notes/236/node14.html   (2006)
+
+   This code also attempts to "register' all known header variables (virtual as well as full)
+   but it would be better to wrap this into a class in the final GBT eco system.
+"""
+
+
+import os
+import sys
+import numpy as np
+from astropy.io import fits
+# -------------------------------------------------  deal with command line
+
+if len(sys.argv) == 1:
+    print("Usage: %s sdfitsfile key" % sys.argv[0])
+    print(__doc__)
+    sys.exit(1)
+
+sdfits=sys.argv[1]
+if not os.path.exists(sdfits):
+    print("File does not exist: ",sdfits)
+    sys.exit(1)
+
+if len(sys.argv) == 2:
+    key = None
+else:
+    key=sys.argv[2]
+    
+
+hdu = fits.open(sdfits)
+
+    
+for i in range(1,len(hdu)):
+    header = hdu[i].header
+    data   = hdu[i].data
+    nrows = header['NAXIS2']
+    ncols = header['TFIELDS']
+    if key == None:
+        cols = hdu[i].data.columns
+        for j in range(len(cols)):
+            print(cols[j].name)
+    else:
+        for j in range(nrows):
+            val = hdu[i].data[j][key]
+            print(val)
+
+
