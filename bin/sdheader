@@ -36,25 +36,25 @@ if not os.path.exists(sdfits):
 # -------------------------------------------------   script can start
 
 # fits known non-SDFITS 
-h_fits1 = ['SIMPLE',
-           'BITPIX',
-           'NAXIS',
-           'NAXIS1',
-           'NAXIS2',
-           'EXTEND',
+h_fits1 = ['SIMPLE',        # always T
+           'BITPIX',        # always 8 for bintable
+           'NAXIS',         # always 2 for bintable, 0 for the primary HDU
+           'NAXIS1',        # width of table (sum of all columns)
+           'NAXIS2',        # number of rows
+           'EXTEND',        # always T
            'COMMENT',
            'HISTORY',
-           'DATE',
-           'ORIGIN',
-           'INSTRUME',
-           'SDFITVER',
+           'DATE',          # see also DATE-OBS below
+           'ORIGIN',        # 'NRAO Green Bank'
+           'INSTRUME',      #
+           'SDFITVER',      # 
            'FITSVER',       # GUIDEVER has also been seen
            'END',
-           'XTENSION',
-           'EXTNAME',
-           'PCOUNT',
-           'GCOUNT',
-           'TFIELDS',
+           'XTENSION',      # 'BINTABLE'
+           'EXTNAME',       # 'SINGLE DISH'
+           'PCOUNT',        # 0
+           'GCOUNT',        # 1
+           'TFIELDS',       # number of fields
           ]
 
 # fits indexed keywords
@@ -67,10 +67,10 @@ h_fits2 = ['TTYPE',
 # core keywords (required)
 h_core = ['BANDWID',      #-
           'DATA',
-          'DATE-OBS',     #-
+          'DATE-OBS',     #-  yipes, DATE_OBS is also seen
           'EXPOSURE',     #-  what about DURATION
           'OBJECT',       #-
-          'TELESCOP',     #-
+          'TELESCOP',     #-  'NRAO_GBT'
           'TSYS',         #-
                           # FREQRES ?
                           # TIME is old, now DATA-OBS has the 2005-06-28T08:56:38.00 type notation
@@ -78,7 +78,7 @@ h_core = ['BANDWID',      #-
 
 # shared keywords
 h_shared = ['OBSERVER',
-            'OBSID',
+            'OBSID',      # https://safe.nrao.edu/wiki/bin/view/GB/Software/ModificationRequest8Q312    (also SCANID, PROCTYPE)
             'PROJID',
             'SCAN',
             'OBSMODE',
@@ -146,7 +146,7 @@ h_gbt =    ['EQUINOX',      # EPOCH?
             'SIG',
             'CAL',           # "T" means it's ON, 'F' it's OFF
             'CALTYPE',       # 2017    LOW or HIGH
-            'DOPFREQ',       # EDGE
+            'DOPFREQ',       # EDGE 2013
             'RADESYS',       # EDGE, note there is also a RADECSYS !!!
             'FEEDXOFF',      # EDGE, note there is also a BEAMXOFF,BEAMEOFF
             'FEEDEOFF',      # EDGE
@@ -158,12 +158,18 @@ h_gbt =    ['EQUINOX',      # EPOCH?
             'QD_METHOD',     # EDGE
             'FOFFREF1',      # EDGE
             'CALPOSITION',   # EDGE
-            'IFNUM',         # EDGE keep format only?
-            'PLNUM',         # EDGE .
-            'FDNUM',         # EDGE .
+            'IFNUM',         # EDGE 2013
+            'PLNUM',         # EDGE 2013
+            'FDNUM',         # EDGE 2013
             'INT',           # EDGE .
             'NSAVE',         # EDGE .
-            'TWARM',
+            'TWARM',         # 4mm
+            'TCOLD',         # 4mm
+            'CALPOSITION',   # 4mm   (internally called POSITION)
+            'ADCSAMPF',      # argus?
+            'VSPDELT',       # argus?
+            'VSPRVAL',       # argus?
+            'VSPRPIX',       # argus?
             ]
 
 h_parkes =  ['CYCLE',        # Mark Calabretta:
@@ -262,6 +268,7 @@ for i in range(1,len(hdu)):
             datadim = header2[tdim]
         else:
             datadim = hdu[i].data[0][tdim]
+        # @TODO what if neither set?
     else:
         datadim = ""
     print("HDU-%d SINGLE DISH %d rows x %d cols x %d chans %s" % (i+1,nrows,ncols,nchan,datadim))
