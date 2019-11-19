@@ -24,3 +24,6 @@ pip install --upgrade pip
 echo "set path = ($dir/bin "'$path); rehash'  >> python_start.csh
 echo "export PATH=${dir}/bin:"'$PATH'         >> python_start.sh
 
+pip install specutils
+pip install pyspeckit
+pip install blessings     # for gbt-pipeline
