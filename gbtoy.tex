@@ -19,7 +19,12 @@
 \usepackage{hyperref}
 \usepackage{lmodern}  
 \usepackage{amsmath}  
-\usepackage{xcolor}   
+\usepackage{xcolor}
+% PJT
+%\usepackage{times}
+%\usepackage{mathptmx}
+
+
 \lstset{
   basicstyle=\ttfamily,
   columns=fullflexible,
@@ -290,9 +295,11 @@ We have the following options:
   M81/M82 2003 data as described on\newline
   \url{https://safe.nrao.edu/wiki/bin/view/GB/Data/M81ExampleExectution}
 \item
-  EDGE survey data via Tony Wong [2016]
+  EDGE survey data via Tony Wong NGC2347.fits in ``keep'' format, raw to come [2016]
 \item
-  ARGUS data?
+  ARGUS data: AGBT17B\_151\_01.raw.vegas/AGBT17B\_151\_01.raw.vegas.A.fits (A..H) [oct-2017]
+\item
+  Two sample data mentioned in Garwood's wiki: Spectrometer - Project TRCO\_NOV14 and DCR - Project TSDSS\_JUL07 [2004]
 \end{enumerate}
 
 There appear to be some SDFITS ``dialect'' issues between these files that need to be understood.
@@ -453,10 +460,26 @@ but DISH has a gridder, and since this is a complete package, this will be inter
 \subsection{CASA/sd}
 
 
-CASA has an SD package, which originated with the Nobeyama 45m\newline
+CASA has an SD package, which originated with the Nobeyama 45m (ASAP)\newline
   \url{https://casa.nrao.edu/casadocs/casa-5.4.1/single-dish-calibration/single-dish-data-calibration-and-reduction}
 
-% https://casa.nrao.edu/casadocs/casa-5.6.0/imaging/single-dish-imaging
+  % https://casa.nrao.edu/casadocs/casa-5.6.0/imaging/single-dish-imaging
+
+  Commands in CASA:
+  
+\begin{verbatim}
+sdbaseline      - Fit/subtract a spectral baseline
+sdcal           - MS SD calibration task
+sdfit           - Fit a spectral line
+sdfixscan       - remove raster scanning patterns
+sdgaincal       - MS SD gain calibration task
+sdimaging       - imaging for total power and spectral data
+sdms            - ?
+sdmstool        - ?
+sdpolavarage    - Average SD spectra over polarisation
+sdsidebandsplit - invoke sideband separation using FFT [EXPERIMENTAL]
+sdsmooth        - Smooth spectral data (gauss, boxcar)
+\end{verbatim}
   
 \subsection{CLASS}
 
