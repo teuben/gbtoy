@@ -1,5 +1,8 @@
 # gbtoy
-toying with gbt spectra in python
+
+Toying with gbt spectra in python. This repo can also install it's own python (anaconda3) if you
+to shield yourself from a system version. You can also try making your own virtual conda environment
+using the system conda. See Makefile for targets.
 
 
 ## notes
@@ -15,6 +18,8 @@ toying with gbt spectra in python
 * https://github.com/pyspeckit     pyspeckit  (has routines to read GBT/SDFITS data; Adam Ginsburg))
 
 * https://github.com/astropy/specutils  astropy's workflow.
+
+* https://github.com/astropy/astropy-APEs/blob/master/APE13.rst Vision for Astropy Spectroscopic Tools
 
 * https://github.com/radio-astro-tools/   varoious modules (spectral-cube, radio-beam,gaussfit_catalog , signal-id) 
 
