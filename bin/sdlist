@@ -23,11 +23,14 @@ if not os.path.exists(sdfits):
     sys.exit(1)
 
 if len(sys.argv) == 2:
-    key = None
+    key1 = None
+elif len(sys.argv) == 3:
+    key1 = sys.argv[2]
+    key2 = None
 else:
-    key=sys.argv[2]
+    key1 = sys.argv[2]
+    key2 = sys.argv[3]
     
-
 hdu = fits.open(sdfits)
 
     
@@ -36,13 +39,18 @@ for i in range(1,len(hdu)):
     data   = hdu[i].data
     nrows = header['NAXIS2']
     ncols = header['TFIELDS']
-    if key == None:
+    if key1 == None:
         cols = hdu[i].data.columns
         for j in range(len(cols)):
             print(cols[j].name)
+    elif key2 == None:
+        for j in range(nrows):
+            val1 = hdu[i].data[j][key1]
+            print(val1)
     else:
         for j in range(nrows):
-            val = hdu[i].data[j][key]
-            print(val)
+            val1 = hdu[i].data[j][key1]
+            val2 = hdu[i].data[j][key2]
+            print(val1,val2)
 
 
