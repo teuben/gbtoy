@@ -12,6 +12,12 @@ foreach arg ($*)
   set $arg
 end
 
+if (-d anaconda3) then
+  echo "anaconda3 is already installed. Remove this directory if you want to refresh it,"
+  echo "or 'make conda' to update it"
+  exit 0
+endif
+
 if (! -e $msh) wget $mc3
 bash $msh -b -p $dir
 
