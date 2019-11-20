@@ -45,3 +45,6 @@ gbtgridder:
 
 gbtpipe:
 	git clone https://github.com/GBTSpectroscopy/gbtpipe
+
+comb:
+	git clone https://github.com/mpound/comb
