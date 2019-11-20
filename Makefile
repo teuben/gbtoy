@@ -1,13 +1,20 @@
 #
 
-
-
-
 gbtoy.pdf:   gbtoy.tex gbtoy.bib
 	pdflatex gbtoy
 	bibtex  gbtoy
 	pdflatex gbtoy
 	pdflatex gbtoy
+
+#      bring (ana)conda up to date, assuming you have write permission
+conda:
+	@echo Using `which conda` to update your conda
+	conda update conda
+
+#      optionally install our own anaconda3 as your python
+#      be sure to source the python_start.sh script after this
+python:
+	./install_anaconda3
 
 git:  specutils pyspeckit spectral-cube gbt-pipeline gbtgridder gbtpipe
 
