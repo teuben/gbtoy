@@ -1,8 +1,16 @@
 #! /bin/csh -f
 #
-#  Install an anaconda3 python for GBT
+#  Install an anaconda3 python for GBT work.
+#
+#  This is optional, you can also try to install packages via conda virtual environments
+#  or likewise operations. Be sure it's python3 though, as we will only support python3.
+#
+#  TBD: despite what it might say at moment below, it is adviced to install packages
+#  using the "pip install -e" method, since we are likely to hack in them.
+#  Certainly do not use "python setup.py".
+#
 
-            # 670MB
+            # ~670MB
 set mc3   = https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh
 set msh   = $mc3:t
 set dir   = `pwd`/anaconda3
