@@ -21,6 +21,7 @@
 \usepackage{amsmath}  
 \usepackage{xcolor}
 % PJT
+\usepackage{enumitem}
 %\usepackage{times}
 %\usepackage{mathptmx}
 
@@ -82,9 +83,11 @@ much easier to understand than most other astronomical formats,
 yet they can exhibit as much complexity as associated with other formats.
 
 On the top level they are just a ``collection'' of spectra, where a
-spectrum is a 1-dimensional array\footnote{to already confuse the
-  reader, some spectra of length N are viewed multi-dimensional, and
-  become (N/2, 2, 1, 1)}. Each spectrum has meta-data that describe
+spectrum is a 1-dimensional array\footnote{to start complicating the
+  mater, for Parkes spectra of length N are viewed multi-dimensional, and
+  become (N/2, 2, 1, 1), where the 2nd dimension is STOKES.   However, GBO
+  always stores them as (N,1,1,1) but now where STOKES is the 4th and last
+  dimension, and designated via CTYPE4}. Each spectrum has meta-data that describe
 where and how the data was taken. Of course position on sky and
 frequency setting, but another 40-80 extra variables are not uncommon,
 and although there is a standard for this, many variables wind up to be telescope
@@ -93,66 +96,78 @@ basic data analysis system. Even more modern systems are essentially
 still of this nature.
  
 For a collection of spectra that cover an area of the sky (the modern
-term is ``On-The-Fly'' (OTF) mapping, another step can be taken after
+term is ``On-The-Fly'' (OTF)) mapping, another step can be taken after
 the spectra have been calibrated, and that is gridding and mapping
 (imaging) these spectra into an image cube.
 
 \section{Overview}
 
-The GBT/GBO single dish processing software is reviewed in light of
-a more coherent workflow using python on the top level, and abandoning the
-IDL licensed software.\footnote{weather info is also needed in some
-  calibration procedures, making it still hard to work offsite}
+The GBT/GBO\footnote{you will see a lot of documentation using GBT and
+  GBO interspersed} single dish processing software is reviewed in
+light of a more coherent workflow using python on the top level, and
+abandoning the IDL licensed software.\footnote{weather info is also
+  needed in some calibration procedures, making it still hard to work
+  offsite}
 
-The current data formats is SDFITS, and will continue to be used.
+The current data formats is SDFITS, and will continue to be used, as this is
+the industry standard, as well as a lot of investment of tools at GBO that
+write SDFITS files.
 
 We will however take this opportunity to review the whole workflow of
 single dish data processing from the astronomers' point of view, by
 comparing functionality offered in other packages such as {\tt comb},
 {\tt SPECX}, and {\tt CLASS}. The predecessors of {\tt GBTIDL} are
-{\tt DISH} (under AIPS++) and before that {\tt uniPOPS}. They are largely
-functionally equivalent, just using other command processors. At the
-current time (2019 as we write this), python is the most likely
-candidate for a data processing package dealing with single dish
-data. Given usage of jupyter notebooks, it would also be nice if any
-new efforts could make use of this.
+{\tt DISH} (under AIPS++) and before that {\tt uniPOPS}. They are
+largely functionally equivalent, just using other command
+processors. At the current time (2019 as we write this), python is the
+most likely candidate for a data processing package dealing with
+single dish data. Given popular usage of astropy and jupyter
+notebooks, it would also be nice if any new efforts could make use of
+this.
 
 \begin{figure}[h]
 \centering
   \includegraphics[width=\textwidth]{fig1.eps}
-\caption{\label{fig1} Evolution of the GBT analysis software.}
+\caption{\label{fig1} Evolution of the GBT analysis software?}
 \end{figure}
 
 \section{Functionality}
 
 What is the functionality we would want from a Single Dish Data Reduction
-package? 
+package? Very briefly here are some items:
 
 \begin{itemize}
 
-\item Deal with spectra on an individual (or group?) basis
+\item Deal with spectra on an individual (or group) basis
   \begin{itemize}
   \item Visualize spectra, a versatile interactive plotting tool is needed
   that can handle overlaying fits and/or other spectra
-  \item Calibrate spectra (Freq, Pos, Nod)
+  \item Calibrate spectra (Freq, Pos, Nod, ...)
   \item Flagging/Masking data
-  \item Edit header (e.g. to fix problems)  
+  \item Co-adding
+  \item Baseline fitting and subtracting
+  \item Smoothing, Rebinning
+  \item Edit header (e.g. hack to fix problems)  
   \item Fit models to spectra
   \end{itemize}
 
 
-\item good batch system for pipeline and/or scripts to define a workflow on one spectrum
+\item Good batch system for pipeline and/or scripts to define a workflow on one spectrum
   and then apply it to all
   
-
   
-\item Organize spectra by properties such as RA, DEC (for gridding) - is there even anything else?
+\item Organize spectra by properties such as RA, DEC (for gridding,
+  but also to select what to work on. E.g. a much liked feature of
+  CLASS is it ability to select spectra from a database. Make sure we
+  can do incrementally do this
 
 \item Gridding spectra in RA,DEC or GLAT,GLON, even in AZ,EL for debugging?
 
 \item Work with lag spectra?
 
 \item Does OTF have special needs?
+
+\item Line and Continuum data have different needs?  
 
 \item integrate well with a python eco-system. Many users are now familiar with
   python, numpy etc.  If the code allows us to get and set numpy arrays,
@@ -170,17 +185,18 @@ We are faced with 3 existing packages: {\tt GBTIDL}, {\tt gbt-pipeline} and
 a derived product, {\tt gbtpipe}, written by Erik Rosolowsky. All codes are
 publicly available. Some code overlap has been noticed. The pulsar timing observations are
 in a completely different category, and will be ``ignored'' for the
-moment until we understand what to do with them. Another point to keep in mind is that
-the ``dialects'' that seem to exist in the SDFITS format are specific to the backend.
+moment. Another point to keep in mind is that
+the ``dialects'' that seem to exist in the SDFITS format are specific to the instrument.
 
-Nomenclature of SD observations ({\it as found in one of the GBT manuals}):
+Nomenclature of SD observations ({\it as found in some of the GBT documentation}):
 
-\begin{itemize}
+\begin{itemize}[leftmargin=1in]
   \item[{\bf region}]  : over many days and possibly RA/DEC
   \item[{\bf session}] : same 'day' continguous in time
   \item[{\bf block}]   : observation unit
   \item[{\bf scan}]    : integrations that belong together (few mins)
   \item[{\bf integration}] : integration of a specific state (pointing, band, polarizations, ...)
+  \item[{\bf phases}]    : the individual rows in SDFITS that make a specific integration. 
 \end{itemize}   
 
 
@@ -252,6 +268,10 @@ GBTIDL can be converted to python in several ways:
   bringing the sdfits interfaces that gbt-pipeline uses into the loop.
   probably not useful to 1) , but could be useful for 2)
 
+\item
+  alternatively, Astropy's {\tt specutils} infrastructure can also be used
+  (specutils, specviz, specreduce) - note that specviz is not in astropy (yet?)
+
 \end{enumerate}
 
 Either way, the peculiar graphics display that GBTIDL is using should
@@ -261,15 +281,17 @@ GUI wrapper).  \url{https://docs.python.org/3/faq/gui.html}
 Do we need the Model-View-Controller (MVC) approach, or can we call
 matplotlib where needed.
 
+For specutils, the specviz package will need to be investigated.
+
 
 \section{Data}
 
 \subsection{The SDFITS standard}
 
 Although there is an SDFITS standard, there are some clear dialect issues. For example,
-the pyspeckit 3C286.fits file does not work in GBTIDL. Also, the 3 standard examples
+the pyspeckit example file does not work in GBTIDL. Then, the 3 standard examples
 from GBTIDL do not work in pyspeckit, because newer header items (e.g. TRGTLONG) are
-absent, because pyspeckit assumed them to be present. They are GBT specific.
+absent, and pyspeckit assumes them to be present. They are GBT specific.
 The number of GBT specific header elements has been steadily increasing. The 2005 data
 have about 46, there are 79 in the 2016 GBT EDGE data.
 
@@ -295,11 +317,13 @@ We have the following options:
   M81/M82 2003 data as described on\newline
   \url{https://safe.nrao.edu/wiki/bin/view/GB/Data/M81ExampleExectution}
 \item
-  EDGE survey data via Tony Wong NGC2347.fits in ``keep'' format, raw to come [2016]
+  EDGE survey data via Tony Wong NGC2347.fits in ``keep'' format, (AGBT05C\_051\_14/) raw to come [2016]
 \item
   ARGUS data: AGBT17B\_151\_01.raw.vegas/AGBT17B\_151\_01.raw.vegas.A.fits (A..H) [oct-2017]
 \item
   Two sample data mentioned in Garwood's wiki: Spectrometer - Project TRCO\_NOV14 and DCR - Project TSDSS\_JUL07 [2004]
+\item
+  AGBT09C\_049\_02/ ??
 \end{enumerate}
 
 There appear to be some SDFITS ``dialect'' issues between these files that need to be understood.
@@ -441,7 +465,7 @@ remove-linear-baseline
 \subsection{UniPOPS}
 
 This is the pre-historic program on which everything (DISH, GBTIDL) seems to be based
-\url{https://www.cv.nrao.edu/unipops/}
+\url{https://www.cv.nrao.edu/unipops/}. Most commands have been copied from uniPOPS.
 
 
 \subsection{DISH}
@@ -491,7 +515,7 @@ We have several experts locally: Alberto, Miguel/Andy, Maitraiyee
 
 \subsection{NOD3}
 
-Seems to be used at Effelsberg.
+Seems to be used at Effelsberg.  Is for continuum?
 
 \subsection{AO IDL}
 
@@ -504,11 +528,11 @@ Some info on \url{http://www.naic.edu/~astro/data/data_formats/idl/index.shtml}
 Here's a brief inventory of what software is used at other SD telescopes
 \begin{itemize}
   \item ALMA/TP 12m: CASA
-  \item APEX 12m: CLASS
+  \item APEX 12m: CLASS for SL, {\tt BoA} and sometimes {\tt crush} for Cont
   \item Arecibo 305m: AO IDL
-  \item Effelsberg 100m:  NOD3, but also new python things (Winkel)
+  \item Effelsberg 100m:  CLASS for Line, {\tt NOD3} for Cont, but also new python things (Winkel)
   \item FAST 500m:
-  \item GBT 110m:  gbtidl
+  \item GBT 110m:  gbtidl, gbt-pipeline + gbtgridder
   \item IRAM 30m: CLASS
   \item JCMT 15m:
   \item LMT 50m:
@@ -694,13 +718,17 @@ g.stats(3900, 4800)
 g.boxcar(8)
 \end{lstlisting}
 
-if you like the IDL one liners for for-loops:
+if you like the IDL one liner for-loops, they work in python as well:
 
 \begin{lstlisting}[language=python]
   for i=g.range(51,57,2):     g.getps(i, plnum=0);     g.accum()
 \end{lstlisting}
 
 will work just as well.
+
+A comment on the BINTABLE data structure. This data has 352 rows. There are 8 scans (SCAN 51..58) The odd scans
+have PROCSEQN=1, the even ones are PROCSEQN=2.  For each scan the first 22 are sampler A9, the second one sampler A13.
+Data are paired up with two phases (one CAL=T and one CAL=F)
 
 \subsection{Example 2: Frequency Switching}
 
@@ -888,6 +916,136 @@ def myscale(g, factor=1.0):
   
 \end{enumerate}
 
+\section{Code Examples}
+
+\subsection{Plotting raw data}
+
+This example can be found in {\tt gbtoy/bin/sdrawsp}, plotting a raw spectrum. No units, just
+Intensity vs. Channel number.
+
+\begin{lstlisting}[language=python]
+from astropy.io import fits
+import numpy as np
+from matplotlib import pyplot as plt
+import sys
+
+fname = sys.argv[1]                    # grab file name, 
+hdu = fits.open(fname)                 # get the HDU's
+data2 = hdu[1].data                    # point at the BINTABLE
+nrow = len(data2)                      # find how many rows (``phases'')
+
+if len(sys.argv) < 3:
+    chans = list(range(nrow))
+else:
+    chans = [int(sys.argv[2])]
+
+plt.figure()
+nchan = 0
+for i in chans:
+    sp = data2[i]['DATA']
+    if nchan == 0:
+        nchan = len(sp)
+        print("Plotting %d spectra of nchan %d" % (nrow,nchan))
+        chan=np.arange(nchan)
+    plt.plot(chan,sp)
+plt.show() 
+
+\end{lstlisting}
+
+\subsection{Case study 1: ngc5291}
+
+This data has 352 rows in the SDFITS files, organized as follows (see also the GBTIDL
+conversation below):  There are 8 scans, each of which has 11 integrations, each of
+which has 2 samplers (A9 and A13, which the XX (-5) and YY (-6) pols), each of which has
+two phases of CAL=T and CAL=F. Hence 8 x 11 x 2 x 2 = 352.   Each phase has an DURATION
+of 5.0475 secs, but the EXPOSURE varies between 4.81 and 4.91 secs, but mostly bimodel
+at about 4.86 and 4.91 secs.  Between each scan there was about a 35 secs pause.
+
+In GBTIDL:
+
+\begin{lstlisting}
+
+GBTIDL -> filein, 'ngc5291.fits' 
+GBTIDL -> summary
+  Scan           Source      Vel    Proc Seq    RestF nIF nInt nFd     Az    El
+-------------------------------------------------------------------------------
+    51          NGC5291   4386.0   OnOff   1    1.420   1   11   1  198.2  18.8
+    52          NGC5291   4386.0   OnOff   2    1.420   1   11   1  198.7  18.9
+    53          NGC5291   4386.0   OnOff   1    1.420   1   11   1  199.1  18.5
+    54          NGC5291   4386.0   OnOff   2    1.420   1   11   1  199.7  18.6
+    55          NGC5291   4386.0   OnOff   1    1.420   1   11   1  200.1  18.2
+    56          NGC5291   4386.0   OnOff   2    1.420   1   11   1  200.7  18.3
+    57          NGC5291   4386.0   OnOff   1    1.420   1   11   1  202.1  17.5
+    58          NGC5291   4386.0   OnOff   2    1.420   1   11   1  202.7  17.6
+GBTIDL -> for i=51,57,2 do begin getps, i, plnum=0 & accum & end  
+Scan:    51 (IF:0 FD:0 PL:0)   units: Ta (K)  Tsys:  19.35    19.73
+Scan:    53 (IF:0 FD:0 PL:0)   units: Ta (K)  Tsys:  19.42    19.73
+Scan:    55 (IF:0 FD:0 PL:0)   units: Ta (K)  Tsys:  19.48    19.86
+Scan:    57 (IF:0 FD:0 PL:0)   units: Ta (K)  Tsys:  19.83    20.06
+GBTIDL -> for i=51,57,2 do begin getps, i, plnum=1 & accum & end  
+Scan:    51 (IF:0 FD:0 PL:1)   units: Ta (K)  Tsys:  19.49    19.89
+Scan:    53 (IF:0 FD:0 PL:1)   units: Ta (K)  Tsys:  19.56    19.92
+Scan:    55 (IF:0 FD:0 PL:1)   units: Ta (K)  Tsys:  19.63    20.07
+Scan:    57 (IF:0 FD:0 PL:1)   units: Ta (K)  Tsys:  19.98    20.24
+GBTIDL -> ave
+% ACCUMAVE: Average of :           8 spectra
+GBTIDL -> header
+--------------------------------------------------------------------------------
+Proj: AGBT05B_047_01   Src   : NGC5291                     Obs : Jeff Mangum    
+
+Scan:        51        RADec :  13 47 24.5  -30 24 25     Fsky:   1.399817 GHz
+Int :         0        Eqnx  :  2000.0                    Frst:   1.420405 GHz
+Pol :         I        V     :  4386.0       OPTI-LSR     BW  :  50.000    MHz
+IF  :         0        AzEl  :  198.152      18.772       delF:   1.526    kHz
+Feed:         1        Gal   :  317.002      30.931       Exp :  429.7     s
+Proc:     OnOff        UT    : +02 05 58.0   2005-06-27   Tcal:    1.45    K
+Seqn:         1        LST/HA: +15 07 50.5   1.34         Tsys:   19.59    K
+--------------------------------------------------------------------------------
+
+GBTIDL -> list,0,22
+ #INDEX           SOURCE       SCAN PROCEDURE POL IFNUM FDNUM        INT SIG CAL
+      0          NGC5291         51     OnOff  XX     0     0          0   T   T
+      1          NGC5291         51     OnOff  XX     0     0          0   T   F
+      2          NGC5291         51     OnOff  XX     0     0          1   T   T
+      3          NGC5291         51     OnOff  XX     0     0          1   T   F
+      4          NGC5291         51     OnOff  XX     0     0          2   T   T
+      5          NGC5291         51     OnOff  XX     0     0          2   T   F
+      6          NGC5291         51     OnOff  XX     0     0          3   T   T
+      7          NGC5291         51     OnOff  XX     0     0          3   T   F
+      8          NGC5291         51     OnOff  XX     0     0          4   T   T
+      9          NGC5291         51     OnOff  XX     0     0          4   T   F
+     10          NGC5291         51     OnOff  XX     0     0          5   T   T
+     11          NGC5291         51     OnOff  XX     0     0          5   T   F
+     12          NGC5291         51     OnOff  XX     0     0          6   T   T
+     13          NGC5291         51     OnOff  XX     0     0          6   T   F
+     14          NGC5291         51     OnOff  XX     0     0          7   T   T
+     15          NGC5291         51     OnOff  XX     0     0          7   T   F
+     16          NGC5291         51     OnOff  XX     0     0          8   T   T
+     17          NGC5291         51     OnOff  XX     0     0          8   T   F
+     18          NGC5291         51     OnOff  XX     0     0          9   T   T
+     19          NGC5291         51     OnOff  XX     0     0          9   T   F
+     20          NGC5291         51     OnOff  XX     0     0         10   T   T
+     21          NGC5291         51     OnOff  XX     0     0         10   T   F
+     22          NGC5291         51     OnOff  YY     0     0          0   T   T
+
+
+\end{lstlisting}
+
+
+In figure\ref{fig3} we show the result of running {\tt sdimage}, which creates a 2D image with channels along X and
+time along Y. The CARTA program in particular can also be a good diagnostic to look at the data quality.
+The ordering of the  different ``phases'' that go into an ``integration'' for a ``scan'' can be easily seen
+in this way of viewing the data.n
+
+\begin{figure}[h]
+\centering
+  \includegraphics[width=\textwidth]{ngc5291_2a.png}
+  \includegraphics[width=\textwidth]{ngc5291_2b.png}
+\caption{\label{fig3} Viewing the an sdimage version with CARTA: full view and zoomed version on the spectral line}
+\end{figure}
+
+
+
 \section{Software}
 
 The following software has been discussed in this paper (where available, we use their ASCL id for reference):
@@ -895,14 +1053,15 @@ The following software has been discussed in this paper (where available, we use
 
 \begin{enumerate}
 \item UniPOPS: \url{https://ascl.net/1503.007}
-\item DISH (within AIPS++)
+\item DISH (within AIPS++) - not supported anymore
 \item GBTIDL: \url{https://ascl.net/1303.019}
-\item comb
+\item comb: \url{https://ascl.net/code/v/2397}   (submitted)
 \item CLASS (within GILDAS) \url{https://ascl.net/1305.010}
 \item pyspeckit: \url{https://ascl.net/1109.001}
 \item aoflagger: \url{https://ascl.net/1010.017}
 \item CASA \url{https://ascl.net/1107.013}
 \item specutils: \url{https://ascl.net/1902.012}
+\item specreduce:  \url{https://github.com/astropy/specreduce}
 \item specviz: \url{https://ascl.net/1902.011}
 \item spectral-cube (within radio-astro-tools) \url{https://ascl.net/1609.017}
 \item Astropy \url{https://ascl.net/1304.002}
@@ -920,7 +1079,7 @@ The following software has been discussed in this paper (where available, we use
 \bibliographystyle{unsrt}
 \bibliography{gbtoy}
 
-\section*{Appendix A}
+\section*{Appendix A: work}
 
 Here is summary of the initial work packages and deliverables for the first 3 months.
 \subsection{Work packages}
@@ -936,5 +1095,19 @@ Here is summary of the initial work packages and deliverables for the first 3 mo
 1) Results of WP1 and WP2 in a white paper [early Dec 2019]
 
 2) Design Document with two use cases (PS,FS) for a PDR with GBO.
+
+\section*{Appendix B: codes}
+
+The following samplings of code and scripts you may now find scatterred in {\tt gbtoy}:
+
+\begin{itemize}
+  \item {\tt bin/sdheader}:  list the header and some size info
+  \item {\tt bin/sdimage}:    convert spectra into a 2D image (nchan x nrows). Creates {\tt basename\_2.fits}
+  \item {\tt bin/sdinspect}:  plot a spectrum using pyspeckit
+  \item {\tt bin/sdlist}:  list all the FIELDS or the content of a single FIELD
+  \item {\tt gbtidl.py}: peter's cross atlantic coding sprint, uses pyspeckit
+\end{itemize}       
+
+
 
 \end{document}
