@@ -55,3 +55,8 @@ gbtpipe:
 
 comb:
 	git clone https://github.com/mpound/comb
+
+gbtidl:
+	wget https://sourceforge.net/projects/gbtidl/files/GBTIDL/2.10.1/gbtidl-2.10.1.tar.gz
+	tar zxf gbtidl-2.10.1.tar.gz
+
