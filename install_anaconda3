@@ -14,6 +14,7 @@
 set mc3   = https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh
 set msh   = $mc3:t
 set dir   = `pwd`/anaconda3
+set e     = 0
 
 # you better know what you are doing here
 foreach arg ($*)
@@ -25,6 +26,12 @@ if (-d anaconda3) then
   echo "or 'make conda' to update it"
   exit 0
 endif
+
+if ($e == 0) then
+   set eopt = ()
+else
+   set eopt = (-e)
+endif   
 
 if (! -e $msh) wget $mc3
 bash $msh -b -p $dir
@@ -38,6 +45,15 @@ pip install --upgrade pip
 echo "set path = ($dir/bin "'$path); rehash'  >> python_start.csh
 echo "export PATH=${dir}/bin:"'$PATH'         >> python_start.sh
 
-pip install specutils
-pip install pyspeckit
+# if your installed (some of these) via the Makefile, you will get them
+# installed from source. Consider using the -e option
+pip install $eopt specutils
+pip install $eopt pyspeckit
+
+# general things we need
 pip install blessings     # for gbt-pipeline
+
+
+# Optional things, arguably useful for hacking, commented out for sanity?
+
+# conda install glueviz
