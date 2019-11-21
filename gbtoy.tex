@@ -73,7 +73,7 @@
 
 \centerline{Peter Teuben (University of Maryland, USA)}
 
-\centerline{Version 0.3 - \today}
+\centerline{Version 0.4 - \today}
 \bigskip
 
 \begin{abstract}
@@ -146,9 +146,133 @@ this.
 
 \section{Functionality}
 
-
-What is the functionality we would want from a Single Dish Data Reduction
+What is the functionality we would want from a SD data reduction
 package? Very briefly here are some items:
+
+
+\subsection{Functionality needed for a single spectrum}
+
+\begin{itemize}
+
+\item Flux/temperature Calibrate: 
+  \begin{itemize}
+    \item
+    simple single value for entire spectrum or array with one 
+       value per channel.
+    \item
+   save calibration array for inspection
+    
+  \end{itemize}
+
+\item Calculate on-off and nodding spectrum:
+  \begin{itemize}
+  \item[{\bf a.}]   
+    on and off spectrum for a single position
+  \item[{\bf b.}]   
+    on spectrum and a shared off position
+  \item[{\bf c.}]   
+    on spectrum and a series of off position observations
+    averaged to make the off for subtraction
+  \item[{\bf d.}]   
+    scan map where off positions are determined from
+    portions of map with no line signal and averaged
+  \item[{\bf e.}]   
+    save on and off for inspection
+  \end{itemize}
+
+\item   Calculate freq switched spectrum:
+  \begin{itemize}
+  \item[{\bf a.}]   
+    FS spectrum based on single position
+  \item[{\bf b.}]   
+    FS spectrum based on reference offset frequency spectrum
+  \item[{\bf c.}]   
+    save sig and ref freq spectrum for inspection
+  \end{itemize}
+
+\item   Fixed noise spectrum:
+   Since the spectrum is made by a digital correlator, is there
+      a fixed noise pattern that may be constant for hours or days
+      that should be calibrated out of all data?
+    Is this done before the SDFITs stage?
+
+\item    Baseline removal:
+   Set window for channels to be used for baseline calculation
+   \begin{itemize}
+  \item[{\bf a.}]   
+    polynomial fit up to 5th order
+  \item[{\bf b.}]   
+    sine fit
+  \item[{\bf c.}]   
+    fourier filter with upper limit specified in channels
+  \item[{\bf d.}]   
+    option to plot fit on data before removal
+  \item[{\bf e.}]   
+    should allow for multiple applications
+  \item[{\bf f.}]   
+   keep array of cumulative removed baseline?
+  \end{itemize}
+
+\item RFI removal:
+  \begin{itemize}
+  \item[{\bf a.}]  
+   to be done from rawest data likely based on presence of narrow 
+   frequency spike or rms variation over time
+  \item[{\bf b.}]  
+    could experiment in lag space
+  \item[{\bf c.}]      
+   replace affected channels with interpolation or NANs
+  \end{itemize}
+
+\item Smooth spectra:
+  \begin{itemize}
+  \item[{\bf a.}]  
+    Hanning with optional channel elimination
+  \item[{\bf b.}]  
+    boxcar summing
+  \item[{\bf c.}]
+    gaussian
+  \item    
+   allow for NANs to be replace with values if there
+       are actual values within smoothing range.
+  \end{itemize}
+
+\item Line parameters:
+  \begin{itemize}
+  \item[{\bf a.}]
+   allow for range of channels for doing calculation
+  \item[{\bf b.}]
+   calculate mean amplitude, velocity, and integrated
+        amplitude -- like moment maps
+  \item[{\bf c.}]
+   fit gaussian line(s)
+  \item[{\bf d.}]
+   fit gaussians to lines with hyperfine structure to get
+           single mean velocity and width
+  \item[{\bf e.}]
+   fit the busy function (ascl.net/1402.015) , or via a plugin, any functional shape
+  \item[{\bf f.}]
+   save line parameters in some way that they can be
+           accessed and output for a group of sources or
+	   positions
+  \end{itemize}
+
+\item Reassign rest frequency:
+  \begin{itemize}
+  \item[{\bf a.}]   
+   assign or reassign rest frequency for observed line
+  \item[{\bf b.}]   
+   allow for multiple rest frequencies for multiple line
+             in spectrum -- alternately allow spectra to
+	     be cut into sub-spectra. Allow for sub-windows
+	     in spectrum each with a rest freq?
+  \end{itemize}
+
+  
+\end{itemize}
+
+
+\subsection{Functionality needed for collections of spectra}
 
 \begin{itemize}
 
@@ -1092,16 +1216,18 @@ in the SDFITS file, skipping over on/off/calon/caloff and pols.
 The {\tt gbtoy/bin/sdlist} command will show you all you can possible want. Also note that our command will show you
 that the SDFITS file is not always time sorted.
 
-In figure\ref{fig3} we show the result of running {\tt sdimage}, which creates a 2D image with channels along X and
-time along Y. The CARTA program in particular can also be a good diagnostic to look at the data quality.
+In figure\ref{fig3} we show the result of running {\tt sdimage}, which creates a 2D image ``Waterfall Plot''
+with channels along X and time along Y. The CARTA program in particular can also be a good diagnostic to look at the data quality.
 The ordering of the  different ``phases'' that go into an ``integration'' for a ``scan'' can be easily seen
-in this way of viewing the data.n
+in this way of viewing the data.
 
 \begin{figure}[h]
 \centering
   \includegraphics[width=\textwidth]{ngc5291_2a.png}
   \includegraphics[width=\textwidth]{ngc5291_2b.png}
-\caption{\label{fig3} Viewing the an sdimage version with CARTA: full view and zoomed version on the spectral line}
+  \caption{\label{fig3} Viewing an sdimage version of ngc5291 with CARTA:
+    full view and zoomed version on the HI spectral line. This kind
+    of image is also known as as {\bf Waterfall Plot}. Channels run along X, time/sequence along Y.}
 \end{figure}
 
 
