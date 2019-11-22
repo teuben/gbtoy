@@ -152,21 +152,21 @@ package? Very briefly here are some items:
 
 \subsection{Functionality needed for a single spectrum}
 
-\begin{itemize}
+\begin{enumerate}
 
 \item Flux/temperature Calibrate: 
   \begin{itemize}
-    \item
+    \item[{\bf a.}]
     simple single value for entire spectrum or array with one 
        value per channel.
-    \item
+    \item[{\bf b.}]
    save calibration array for inspection
     
   \end{itemize}
 
 \item Calculate on-off and nodding spectrum:
   \begin{itemize}
-  \item[{\bf a.}]   
+  \item[{\bf a.}]
     on and off spectrum for a single position
   \item[{\bf b.}]   
     on spectrum and a shared off position
@@ -232,7 +232,7 @@ package? Very briefly here are some items:
     boxcar summing
   \item[{\bf c.}]
     gaussian
-  \item    
+  \item[{\bf d.}]   
    allow for NANs to be replace with values if there
        are actual values within smoothing range.
   \end{itemize}
@@ -269,14 +269,14 @@ package? Very briefly here are some items:
   \end{itemize}
 
   
-\end{itemize}
+\end{enumerate}
 
 
 \subsection{Functionality needed for collections of spectra}
 
 \begin{itemize}
 
-\item Deal with spectra on an individual (or group) basis
+\item Deal with spectra on an individual (or group) basis[see above]
   \begin{itemize}
   \item Visualize spectra, a versatile interactive plotting tool is needed
   that can handle overlaying fits and/or other spectra
@@ -890,6 +890,7 @@ g.stats(3900, 4800)
 g.boxcar(8)
 \end{lstlisting}
 
+
 if you like the IDL one liner for-loops, they work in python as well:
 
 \begin{lstlisting}[language=python]
@@ -901,6 +902,9 @@ will work just as well.
 A comment on the BINTABLE data structure. This data has 352 rows. There are 8 scans (SCAN 51..58) The odd scans
 have PROCSEQN=1, the even ones are PROCSEQN=2.  For each scan the first 22 are sampler A9, the second one sampler A13.
 Data are paired up with two phases (one CAL=T and one CAL=F)
+
+
+DATA(cal[2],int[11],sampler[2],procseqn[2],scan[4])
 
 \subsection{Example 2: Frequency Switching}
 
@@ -970,6 +974,11 @@ g.fitgauss()
 
 \subsection{Example 3: Nodding}
 
+DATA(cal[2], int[4], pol[2], sampler[4], procseqn[2], scan[4])
+
+Totaling 512 rows.
+
+
 \begin{lstlisting}[language=python]
 g.filein('I1481.fits')
 g.getnod(182, plnum=0)
@@ -1004,7 +1013,7 @@ g.tellstack()
 
 g.freeze()
 for i in range(g.acount):
-  getnod( g.astack(i), plnum=0, units='Jy', tsys=60
+  getnod( g.astack(i), plnum=0, units='Jy', tsys=60)
   g.accum()
   g.copy(0, i*2+2)
   g.getnod( g.astack(i), plnum=1, units='Jy', tsys=60)
