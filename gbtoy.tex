@@ -73,14 +73,14 @@
 
 \centerline{Peter Teuben (University of Maryland, USA)}
 
-\centerline{Version 0.4 - \today}
+\centerline{Version 0.5 - \today}
 \bigskip
 
 \begin{abstract}
 
-We discuss the status of SD data analysis systems, focusing on
-updating the GBO system with a modern python3 based eco-system. This
-draft has supporting code and documentation in
+This is a working document discussing the status of SD data analysis
+systems, focusing on updating the GBO system with a modern python3
+based eco-system. Supporting code and documentation can be found in
 \url{https://github.com/teuben/gbtoy}.
 
 \end{abstract}
@@ -92,14 +92,14 @@ much easier to understand than most other astronomical formats,
 yet they can exhibit as much complexity as associated with other formats.
 
 On the top level they are just a ``collection'' of spectra, where a
-spectrum is a 1-dimensional array\footnote{to start complicating the
-  mater, for Parkes spectra of length N are viewed multi-dimensional, and
+spectrum is a 1-dimensional array\footnote{for Parkes spectra
+  of length N are viewed multi-dimensional, and
   become (N/2, 2, 1, 1), where the 2nd dimension is STOKES.   However, GBO
-  always stores them as (N,1,1,1) but now where STOKES is the 4th and last
-  dimension, and designated via CTYPE4}. Each spectrum has meta-data that describe
+  always stores them as (N,1,1,1) where STOKES is the 4th and last axis,
+  and designated via CTYPE4}. Each spectrum has meta-data that describe
 where and how the data was taken. Of course position on sky and
-frequency setting, but another 40-80 extra variables are not uncommon,
-and although there is a standard for this, many variables wind up to be telescope
+frequency setting, but another 40-80 extra variables are not uncommon.
+Although there is a standard for this, many variables wind up to be telescope
 specific. In the past a simple stack based spectrum calculator was the
 basic data analysis system for SD data.
 Even more modern systems are essentially still of this nature.
@@ -111,8 +111,10 @@ the spectra have been calibrated, and that is gridding and mapping
 
 \begin{figure}[h]
 \centering
-  \includegraphics[width=\textwidth]{fig1.eps}
-\caption{\label{fig1} Evolution of the GBT analysis software?}
+  \includegraphics[width=0.4\textwidth]{fig2.eps}
+  \caption{\label{fig1} SDFITS BINTABLE: spectra data and meta-data.
+    Typically different rows in the DATA are manipulated (ON/OFF and averaging)
+    to result in a final single spectrum for a given RA/DEC.}
 \end{figure}
 
 
@@ -276,7 +278,7 @@ package? Very briefly here are some items:
 
 \begin{itemize}
 
-\item Deal with spectra on an individual (or group) basis[see above]
+\item Deal with spectra on an individual (or group) basis [see above]
   \begin{itemize}
   \item Visualize spectra, a versatile interactive plotting tool is needed
   that can handle overlaying fits and/or other spectra
@@ -299,11 +301,13 @@ package? Very briefly here are some items:
 
 \item Gridding spectra in RA,DEC or GLAT,GLON, even in AZ,EL for debugging?
 
-\item Work with lag spectra?
-
 \item Does OTF have special needs?
 
-\item Line and Continuum data have different needs?  
+\item Line and Continuum data have different needs?
+
+\item Keep provenance in SDFITS files
+
+\item Example files with a regression test  
 
 \item integrate well with a python eco-system. Many users are now familiar with
   python, numpy etc.  If the code allows us to get and set numpy arrays,
@@ -312,6 +316,12 @@ package? Very briefly here are some items:
   notebooks. Use of widgets would be interesting too, but that's very notebook
   specific.
 \end{itemize}
+
+\begin{figure}[h]
+\centering
+  \includegraphics[width=\textwidth]{fig1.eps}
+\caption{\label{fig2} Evolution of the GBT analysis software?}
+\end{figure}
 
 
 \section{Existing GBT code}
@@ -332,10 +342,11 @@ the ``dialects'' that seem to exist in the SDFITS format are specific to the ins
 \begin{itemize}[leftmargin=1in]
   \item[{\bf region}]  : over many days and possibly RA/DEC
   \item[{\bf session}] : same 'day' continguous in time
-  \item[{\bf block}]   : observation unit, typically in one SDFITS file.
+  \item[{\bf block}]   : observation unit, typically in one SDFITS file (or related SDFITS files with VEGAS)
   \item[{\bf scan}]    : integrations that belong together (few mins)
   \item[{\bf integration}] : integration of a specific state (pointing, band, polarizations, ...)
-  \item[{\bf phases}]    : the individual rows in SDFITS that make a specific integration. 
+  \item[{\bf phases}]    : the individual rows in SDFITS that make a specific integration.  In GBTIDL they are also
+    referred to as a ``record''.
 \end{itemize}   
 
 
@@ -386,8 +397,8 @@ GBTIDL -> exit                   ; Exit GBTIDL
 
 \begin{figure}[h]
 \centering
-  \includegraphics[width=\textwidth]{gbtidl1.png}
-\caption{\label{fig2} Example GBTIDL spectrum after baseline}
+  \includegraphics[width=0.75\textwidth]{gbtidl1.png}
+\caption{\label{fig2} Example GBTIDL spectrum after baseline, not matching the example code!}
 \end{figure}
 
 
@@ -1304,6 +1315,21 @@ The following samplings of code and scripts you may now find scatterred in {\tt 
   \item {\tt bin/sdlist}:  list all the FIELDS or the content of a single FIELD
   \item {\tt gbtidl.py}: peter's cross atlantic coding sprint, uses pyspeckit (POC, unfinished of course)
 \end{itemize}       
+
+\section*{Appendix C: benchmarks}
+
+Two datasets have come out that are useful for benchmarking:
+
+\subsection{ngc5271.fits}
+
+This is the PS data Example 1 in the GBTIDL manual. ``easy'' to understand. Raw data. 352 rows.  Used with a simple {\tt filein} command.
+
+\subsection{EDGE NGC2347}
+
+This is more the new style, many files in a directory. We have 6 files totalling 2GB. Used with the more complex {\tt dirin} command.
+Tony Wong has provided an IDL script that might help, but so far this has been more useful to check the I/O speed and on the question
+for the need for an index file.
+
 
 
 
