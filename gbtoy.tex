@@ -112,9 +112,10 @@ the spectra have been calibrated, and that is gridding and mapping
 \begin{figure}[h]
 \centering
   \includegraphics[width=0.4\textwidth]{fig2.eps}
-  \caption{\label{fig1} SDFITS BINTABLE: spectra data and meta-data.
+  \caption{\label{bintable} SDFITS BINTABLE: spectra data and meta-data.
     Typically different rows in the DATA are manipulated (ON/OFF and averaging)
-    to result in a final single spectrum for a given RA/DEC.}
+    to result in a final single spectrum for a given RA/DEC. See also
+    figure \ref{waterfall}.}
 \end{figure}
 
 
@@ -320,7 +321,7 @@ package? Very briefly here are some items:
 \begin{figure}[h]
 \centering
   \includegraphics[width=\textwidth]{fig1.eps}
-\caption{\label{fig2} Evolution of the GBT analysis software?}
+\caption{\label{evolution} Evolution of the GBT analysis software?}
 \end{figure}
 
 
@@ -398,7 +399,7 @@ GBTIDL -> exit                   ; Exit GBTIDL
 \begin{figure}[h]
 \centering
   \includegraphics[width=0.75\textwidth]{gbtidl1.png}
-\caption{\label{fig2} Example GBTIDL spectrum after baseline, not matching the example code!}
+\caption{\label{spectrum1} Example GBTIDL spectrum after baseline, not matching the example code!}
 \end{figure}
 
 
@@ -912,10 +913,12 @@ will work just as well.
 
 A comment on the BINTABLE data structure. This data has 352 rows. There are 8 scans (SCAN 51..58) The odd scans
 have PROCSEQN=1, the even ones are PROCSEQN=2.  For each scan the first 22 are sampler A9, the second one sampler A13.
-Data are paired up with two phases (one CAL=T and one CAL=F)
+Data are paired up with two phases (one CAL=T and one CAL=F).   Thus the data is 5-dimension and can see written
+as follows:
 
-
+$$
 DATA(cal[2],int[11],sampler[2],procseqn[2],scan[4])
+$$
 
 \subsection{Example 2: Frequency Switching}
 
@@ -985,9 +988,11 @@ g.fitgauss()
 
 \subsection{Example 3: Nodding}
 
+In this case we have 512 rows, and the DATA can be seen as 6-dimensional.  One dimension shy
+of the official FORTRAN limit of the number of dimensions in an array.
+$$
 DATA(cal[2], int[4], pol[2], sampler[4], procseqn[2], scan[4])
-
-Totaling 512 rows.
+$$
 
 
 \begin{lstlisting}[language=python]
@@ -1059,6 +1064,11 @@ for i=g.range(3,9):
   g.oshow(i, color='red')
 \end{lstlisting}
 
+\subsection{Example 3b: Nodding}
+
+Here we try to show an alternative style to stack arithmetic to the
+more complex example we just saw.
+
 \subsection{example from manual how IDL and OY compare}
 
 \begin{lstlisting}[language=python]
@@ -1078,6 +1088,9 @@ def myscale(g, factor=1.0):
     g.setdata(factor * g.getdata())
     # if !g.frozen eq 0 then show
 \end{lstlisting}
+
+
+
 
 \section{Questions/Problems}
 
@@ -1143,24 +1156,20 @@ for i in chans:
 plt.show() 
 \end{lstlisting}
 
-A zoomed in version of the 352 raw spectra ``stacked'' are in figure\ref{fig4}.
+A zoomed in version of the 352 raw spectra ``stacked'' are in figure \ref{spectrum2}.
 
 \begin{figure}[h]
 \centering
   \includegraphics[width=\textwidth]{sdrawsp1.png}
-  \caption{\label{fig4} Zoomed section of the stacked raw spectra of ngc5291 made with {\tt sdrawsp}}
+  \caption{\label{spectrum2} Zoomed section of the stacked raw spectra of ngc5291 made with {\tt sdrawsp}.
+    Even without any calibration the signal is clearly visible. However, it's not ngc5291, it's ngc0000.
+    You will later see the galaxy is near channel 16000, in the middle of the spectrum.}
 \end{figure}
 
 
 \subsection{Case study 1: ngc5291}
 
-This data has 352 rows in the SDFITS file, organized as follows (see also the GBTIDL
-conversation below):  There are 8 scans, each of which has 11 integrations, each of
-which has 2 samplers (A9 and A13, which are the XX (-5) and YY (-6) pols), each of which has
-two phases of CAL=T and CAL=F. Hence 8 x 11 x 2 x 2 = 352.   Each phase has an DURATION
-of 5.0475 secs, but the EXPOSURE varies between 4.81 and 4.91 secs, but mostly bimodal
-at about 4.86 and 4.91 secs.  Between each scan there was about a 35 secs pause, the
-whole observation took from 2:05:58.00 to 2:28:23.93, about 24 minutes.
+Lets start with GBTIDL:
 
 \begin{lstlisting}
 
@@ -1176,7 +1185,15 @@ GBTIDL -> summary
     56          NGC5291   4386.0   OnOff   2    1.420   1   11   1  200.7  18.3
     57          NGC5291   4386.0   OnOff   1    1.420   1   11   1  202.1  17.5
     58          NGC5291   4386.0   OnOff   2    1.420   1   11   1  202.7  17.6
-    
+\end{lstlisting}
+
+So the user sees 8 scans, but they come in pairs as defined by ``Seq'' (PROCSEQN).  The
+PS calibration is done with the {\tt getps} command. They come in pairs, so we only
+loop over 4 ``odd'' scans (``even'' scans would produce exactly the same result).
+{\tt plnum} refers the XX and YY polarization, which for PS data are hidden in the SAMPLER
+meta data.
+
+\begin{lstlisting}
 GBTIDL -> for i=51,57,2 do begin getps, i, plnum=0 & accum & end  
 Scan:    51 (IF:0 FD:0 PL:0)   units: Ta (K)  Tsys:  19.35    19.73
 Scan:    53 (IF:0 FD:0 PL:0)   units: Ta (K)  Tsys:  19.42    19.73
@@ -1205,6 +1222,13 @@ Proc:     OnOff        UT    : +02 05 58.0   2005-06-27   Tcal:    1.45    K
 Seqn:         1        LST/HA: +15 07 50.5   1.34         Tsys:   19.59    K
 --------------------------------------------------------------------------------
 
+GBTIDL -> write_ascii,'n5291_idl.tab'
+\end{lstlisting}
+
+On the screen will now be pretty nice spectrum, that you can zoom in on using
+the cursor. See paper fig5 - not placed here yet.
+
+\begin{lstlisting}  
 GBTIDL -> list,0,45
  #INDEX           SOURCE       SCAN PROCEDURE POL IFNUM FDNUM        INT SIG CAL
       0          NGC5291         51     OnOff  XX     0     0          0   T   T
@@ -1231,12 +1255,91 @@ GBTIDL -> list,0,45
      45          NGC5291         52     OnOff  XX     0     0          0   T   F
 \end{lstlisting}
 
+This data has 352 rows in the SDFITS file, organized as follows (see also the GBTIDL
+conversation below):  There are 8 scans, each of which has 11 integrations, each of
+which has 2 samplers (A9 and A13, which are the XX (-5) and YY (-6) pols), each of which has
+two phases of CAL=T and CAL=F. Hence 8 x 11 x 2 x 2 = 352. Another way of writing this in a
+5-dimensional array is $DATA(ncal,nint,nsampler,nprocseqn,nscan)$.
+
+Each phase (record) has an DURATION
+of 5.0475 secs, but the EXPOSURE varies between 4.81 and 4.91 secs, but mostly bimodal
+at about 4.86 and 4.91 secs.  Between each scan there was about a 35 secs pause, the
+whole observation took from 2:05:58.00 to 2:28:23.93, about 24 minutes.
+
+
 Although this {\tt list} command gives a nice summary, it only shows typicall 1/4 of the ``phases'' you will see
 in the SDFITS file, skipping over on/off/calon/caloff and pols.
 The {\tt gbtoy/bin/sdlist} command will show you all you can possible want. Also note that our command will show you
 that the SDFITS file is not always time sorted.
 
-In figure\ref{fig3} we show the result of running {\tt sdimage}, which creates a 2D image ``Waterfall Plot''
+
+\begin{lstlisting}
+  filein, 'ngc5291.fits'
+  
+  for i=51,57,2 do begin getps, i, plnum=0 & accum & end  
+  for i=51,57,2 do begin getps, i, plnum=1 & accum & end
+  ave
+  stats,6000,12000
+  ; -> 0.29487  0.015592  0.24204     0.35086
+
+  write_ascii,'n5291_idl.tab'
+
+  getps, 51, plnum=0
+  ; -> Tsys:  19.35    19.73
+  stats,6000,12000
+  ; -> 0.26267 0.044331 0.11131     0.43709
+  accum
+  getps, 51, plnum=1
+  ; -> Tsys:  19.49    19.89
+  accum
+  ave
+  stats,6000,12000
+  ; -> 0.29296 0.031619
+  write_ascii,'n5291_51.tab'
+
+  getps, 51, plnum=0, intnum=0
+  ; -> Tsys:  19.20    19.96
+  stats,6000,12000
+  ; -> 0.26469   0.14426 -0.25974     0.81696
+  accum
+  ; -> 0.26573  0.14347
+  getps, 51, plnum=1, intnum=0
+  ; -> Tsys:  19.30    20.08
+  accum
+  ave
+  stats,6000,12000
+  ; -> 0.28946 0.10193
+  write_ascii,'n5291_51a.tab'
+
+  getrec,0
+  stats,6000,12000
+  ; -> 1.2461      0.13825  1.0871      1.5781
+  write_ascii,'n5291_0.tab'
+  
+  getrec,1
+  stats,6000,12000  
+  ; -> 1.1596      0.12798  1.0093      1.4739
+  write_ascii,'n5291_1.tab'
+  
+  getrec,44
+  stats,6000,12000  
+  ; -> 1.2280      0.13591  1.0713      1.5567
+  write_ascii,'n5291_44.tab'
+
+  getrec,45
+  stats,6000,12000  
+  ; -> 1.1394      0.12588  0.99495      1.4452
+  write_ascii,'n5291_45.tab'
+  
+  
+\end{lstlisting}
+
+
+
+
+
+
+In figure \ref{waterfall} we show the result of running {\tt sdimage}, which creates a 2D image ``Waterfall Plot''
 with channels along X and time along Y. The CARTA program in particular can also be a good diagnostic to look at the data quality.
 The ordering of the  different ``phases'' that go into an ``integration'' for a ``scan'' can be easily seen
 in this way of viewing the data.
@@ -1245,10 +1348,18 @@ in this way of viewing the data.
 \centering
   \includegraphics[width=\textwidth]{ngc5291_2a.png}
   \includegraphics[width=\textwidth]{ngc5291_2b.png}
-  \caption{\label{fig3} Viewing an sdimage version of ngc5291 with CARTA:
+  \caption{\label{waterfall} Viewing an sdimage version of ngc5291 with CARTA:
     full view and zoomed version on the HI spectral line. This kind
-    of image is also known as as {\bf Waterfall Plot}. Channels run along X, time/sequence along Y.}
+    of image is also known as a {\bf Waterfall Plot}. Channels run along X, time/sequence along Y.
+    Compare this to figure \ref{bintable}.}
 \end{figure}
+
+\subsection{Low Level GBTIDL}
+
+In order to reproduce this example, we need to consider the following calibration procedure:
+$$
+T_A = T_{sys} { { (ON-OFF)} \over {ON} }
+$$
 
 
 
