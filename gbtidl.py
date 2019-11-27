@@ -54,7 +54,7 @@ class GBTIDL(object):
         self._filein  = filein          # optional SDFITS file
         self._dirin   = dirin           # optional directory with related SDFITS files
         self.mode     = 0               # none (0) or file (1) or dir (2)
-        self.version  = "0.0.2"         # 
+        self.version  = "0.0.3"         # 
         self.s        = list(range(ndc))
         self.c        = list(range(ndc))
         for i in range(ndc):
@@ -69,6 +69,16 @@ class GBTIDL(object):
 
         self.help()
 
+    def __repr__(self):
+        _help = """
+        This is a GBTIDL object, treat it with respect, don't overwrite it, you
+        would loose all your work.
+        You can create more with the command
+               g2 = gbtidl.GBTIDL(NDC=32)
+        but for most people there is no reason to make more.
+        """
+        return _help
+
     def help(self, concept=None):
         
         _help = """
@@ -77,11 +87,16 @@ class GBTIDL(object):
         
                    http://github.edu/teuben/gbtoy
 
-        For help with a GBTOY routine from the command line, use
-             the procedure 'usage'.  For example:
+        For help with a GBTOY routine from the ipython command line, use
+        the standard ipython help methods.  For example:
 
         usage('show')          ; gives the syntax of the procedure 'show'
         usage('show',True)     ; gives more information on 'show'
+
+        show?
+        help(show)
+
+        The GBTIDL command usage will remind you
         --------------------------------------------------------------------
         """
         print(_help % self.version)
@@ -211,6 +226,10 @@ class GBTIDL(object):
     def usage(self, task, verbose=False):
         """ print the long or short __docstring__
         """
+        print("GBTIDL>  this command is deprecated, just use the ipython methods")
+        # if task is a string, find the function name
+        _task = task
+        help(_task)
 
     def range(self, b, e, s=None):
         """ emulate the more human range often used in IDL
