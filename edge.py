@@ -1,9 +1,8 @@
-
-
+# Example gbtoy python version of edge.pro
+# Formerly called reduce_15b287.pro by Tony Wong
 
 def edge(start_scan, stop_scan, ifnum=1, plnum=[0,1]):
-    """
-    Example EDGE reduction python function assuming gbtoy
+    """  for total power tracks for EDGE survey
     """
     scanlist = range(start_scan, stop_scan + 1)
     nscans = len(scanlist)
