@@ -14,8 +14,9 @@ def edge(start_scan, stop_scan, ifnum=1, plnum=[0,1]):
         # info = scan_info(scanlist[i])
         j = i%3 - 1      # j==0 is always the ref, on either side are the sig's
         if j == 0:  continue
-        for p in pol:
-            g.getsigref(scanlist[i],scanlist[i-j],ifnum=ifnum,plnum=p)
+        for pol in plnum:
+            print(scanlist[i],scanlist[i-j])
+            g.getsigref(scanlist[i],scanlist[i-j],ifnum=ifnum,plnum=pol)
             g.accum()
     g.ave()
     g.show()
