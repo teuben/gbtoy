@@ -1,7 +1,7 @@
 
 
 
-def edge(start_scan, stop_scan, ifnum=None, plnum=None):
+def edge(start_scan, stop_scan, ifnum=1, plnum=[0,1]):
     """
     Example EDGE reduction python function assuming gbtoy
     """
@@ -9,15 +9,6 @@ def edge(start_scan, stop_scan, ifnum=None, plnum=None):
     nscans = len(scanlist)
 
     g.sclear()
-    if plnum == None:
-        print('NOTICE: (default) will average both polarizations')
-        pol = [0,1]
-    else:
-        pol = [plnum]
-
-    if ifnum == None:
-        print('NOTICE: (default) IFNUM=1')
-        ifnum=1
 
     for i in range(nscans):
         # info = scan_info(scanlist[i])
