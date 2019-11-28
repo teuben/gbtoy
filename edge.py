@@ -1,7 +1,7 @@
 
 
 
-def edge(start_scan, stop_scanx, ifnum=None, plnum=None):
+def edge(start_scan, stop_scan, ifnum=None, plnum=None):
     """
     Example EDGE reduction python function assuming gbtoy
     """
