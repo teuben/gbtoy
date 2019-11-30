@@ -1,0 +1,43 @@
+#! /usr/bin/env python
+#
+#    the most simple raw access to the raw data in an SDFITS file
+#    overplots all spectra on top
+
+from astropy.io import fits
+import numpy as np
+from matplotlib import pyplot as plt
+
+import sys
+
+fname = sys.argv[1]
+
+hdu = fits.open(fname)
+data2 = hdu[1].data
+nrow = len(data2)
+
+if len(sys.argv) < 3:
+    chans = list(range(nrow))       # either use all channels
+else:
+    chans = []
+    for arg in sys.argv[2:]:
+        chans.append(int(arg))
+
+print("Plotting %d raw spectra for %s" % (len(chans),fname))
+plt.figure()
+nchan = 0
+for i in chans:
+    sp0 = data2[i]['DATA']             # the 'off' spectrum
+    if len(chans) == 1:
+        sp1 = data2[i+1]['DATA']       # the 'on'  spectrum    
+    if nchan == 0:
+        nchan = len(sp0)
+        print("Plotting %d spectra of nchan %d" % (nrow,nchan))
+        chan=np.arange(nchan)
+    if len(chans) > 1:
+        sp  = sp0
+    else:
+        sp = (sp1-sp0)/sp0      # (on - off)/off - no calibration
+        
+    plt.plot(chan,sp)
+plt.show()
+
