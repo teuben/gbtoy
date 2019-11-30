@@ -3,26 +3,40 @@
 #    the most simple raw access to the raw data in an SDFITS file
 #    overplots all spectra on top
 
+__doc__ = """
+   Plot a raw SDFITS spectrum.  If no row numbers are given (0 being the first)
+   *all* spectra are overplotted. This could be overwhelming matplotlib, your
+   eyes, or the compute power of your computer.
+
+"""
+
+import os
+import sys
 from astropy.io import fits
 import numpy as np
 from matplotlib import pyplot as plt
 
-import sys
+if len(sys.argv) == 1:
+    print("Usage: %s sdfitsfile [row(s)]q" % sys.argv[0])
+    print(__doc__)
+    sys.exit(1)
 
-fname = sys.argv[1]
+sdfits = sys.argv[1]
+if not os.path.exists(sdfits):
+    print("File does not exist: ",sdfits)
+    sys.exit(1)
 
-hdu = fits.open(fname)
+hdu = fits.open(sdfits)
 data2 = hdu[1].data
 nrow = len(data2)
 
-if len(sys.argv) < 3:
-    chans = list(range(nrow))       # either use all channels
-else:
-    chans = []
-    for arg in sys.argv[2:]:
-        chans.append(int(arg))
+chans = []
+for arg in sys.argv[2:]:
+    chans.append(int(arg))
+if len(chans) == 0:
+    chans = list(range(nrow)) 
 
-print("Plotting %d raw spectra for %s" % (len(chans),fname))
+print("Plotting %d raw spectra for %s" % (len(chans),sdfits))
 plt.figure()
 nchan = 0
 for i in chans:
