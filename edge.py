@@ -4,7 +4,7 @@
 def edge(start_scan, stop_scan, ifnum=1, plnum=[0,1]):
     """  for total power tracks for EDGE survey
     """
-    scanlist = range(start_scan, stop_scan + 1)
+    scanlist = g.range(start_scan, stop_scan)
     nscans = len(scanlist)
 
     g.sclear()
