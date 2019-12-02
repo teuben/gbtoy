@@ -1,5 +1,10 @@
 #
 
+# this is the new way
+gbtoy:
+	git clone https://git.overleaf.com/5ddecdf65bbba7000140ea5f gbtoy
+
+# this is old
 gbtoy.pdf:   gbtoy.tex gbtoy.bib
 	pdflatex gbtoy
 	bibtex  gbtoy
@@ -10,6 +15,15 @@ gbtoy.pdf:   gbtoy.tex gbtoy.bib
 conda:
 	@echo Using `which conda` to update your conda
 	conda update conda
+
+#      this has not been tested 
+conda_test:
+	conda update conda
+	conda env create -f environment.yml
+	conda activate gbtoy1
+	python -m ipykernel install --user --name gbtoy1 --display-name "gbtoy1"
+	jupyter notebook
+
 
 #      optionally install our own anaconda3 as your python
 #      be sure to source the python_start.sh script after this
@@ -26,6 +40,9 @@ specreduce:
 
 pyspeckit:
 	git clone https://github.com/pyspeckit/pyspeckit
+
+pyspeckit-tests:
+	git clone https://github.com/pyspeckit/pyspeckit-tests
 
 pyspeckit2:
 	git clone https://github.com/teuben/pyspeckit
