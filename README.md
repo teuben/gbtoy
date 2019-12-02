@@ -19,6 +19,10 @@ using the system conda. See Makefile for targets.
 
 * https://github.com/astropy/specutils  astropy's workflow.
 
+* https://github.com/spacetelescope/specviz  specviz
+
+* 
+
 * https://github.com/astropy/astropy-APEs/blob/master/APE13.rst Vision for Astropy Spectroscopic Tools
 
 * https://github.com/radio-astro-tools/   varoious modules (spectral-cube, radio-beam,gaussfit_catalog , signal-id) 
