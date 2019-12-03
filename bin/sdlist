@@ -3,6 +3,8 @@
 __doc__ = """
    List the SDFITS fields. It can optionally list the values of a particular field.
 
+   See also the fdump program from the (cfitsio) ftools suite 
+
 """
 
 
