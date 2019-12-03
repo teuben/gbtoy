@@ -1,4 +1,7 @@
-%Template credit: Jan-Willem Steeb, NRAO
+
+% See also:  https://www.overleaf.com/project/5ddecdf65bbba7000140ea5f
+%       or:  https://git.overleaf.com/5ddecdf65bbba7000140ea5f
+
 
 \documentclass[12pt,a4paper]{article}
 
@@ -73,40 +76,65 @@
 
 \centerline{Peter Teuben (University of Maryland, USA)}
 
-\centerline{Version 0.5 - \today}
+% as of version 0.6 we are in overleaf
+\centerline{Version 0.7a - \today}
 \bigskip
 
 \begin{abstract}
 
-This document is not maintained here. It's now in overleaf. See Makefile for instructions.
-  
+This is a working document discussing the status of SD data analysis
+systems, focusing on updating the GBO system with a modern python3
+based eco-system. Supporting code and documentation can be found in
+\url{https://github.com/teuben/gbtoy}.
+
 \end{abstract}
 
-\section{Introduction for non-SD users}
+\section{Motivation and Scope}
 
-Here we discuss a Single Dish (SD) data analysis package.  SD data are
-much easier to understand than most other astronomical formats,
-yet they can exhibit as much complexity as associated with other formats.
+This memo reviews the software available for single-dish spectral line data analysis for the purpose of identifying potential paths for moving Green Bank Observatory spectral line analysis software to a python-based family of applications with a common infrastructure. The long term goal is to unify all of the current programs (GBTIDL, GBTgridder, GBTpipeline), simplify the code base, incorporate user needs that are currently met by individual one-off programs, and enable new capabilities which make user interaction more efficient and effective.
 
-On the top level they are just a ``collection'' of spectra, where a
-spectrum is a 1-dimensional array\footnote{for Parkes spectra
+The scope of this memo is the exploration of: (1) existing single-dish packages currently utilized by other observatories assess capabilities; (2) existing python packages for analyzing spectra, and (3) options for adopting existing code as the starting point. There is no current single-dish radio observatory which uses a fully pythonic software system.
+
+\section{Introduction to Single Dish Data}
+
+Single Dish (SD) spectral data are conceptually easy
+to understand, yet they exhibit considerable complexity in the implementation
+for different telescopes, instruments, and observing modes.
+On the top level, a spectrum can be thought of as a 1-dimensional array of measurements as a function of frequency.
+Each spectrum has meta-data that describe
+where and how the data was taken. Of course position on sky and
+frequency setting are fundamental, but another 40-80 key values are typically present to describe the state of the telescope, observing mode, instrument, and spectrometer.
+Although a number of these key values are standard, many are telescope, instrument, and spectrometer specific.
+
+It is most often the case that a spectrum, as a 1-D array, has a special relationship
+to one or more other spectra in a data set; for example receivers are often dual polarization so they simultaneously collect two spectra.  \footnote{for Parkes spectra
   of length N are viewed multi-dimensional, and
   become (N/2, 2, 1, 1), where the 2nd dimension is STOKES.   However, GBO
   always stores them as (N,1,1,1) where STOKES is the 4th and last axis,
-  and designated via CTYPE4}. Each spectrum has meta-data that describe
-where and how the data was taken. Of course position on sky and
-frequency setting, but another 40-80 extra variables are not uncommon.
-Although there is a standard for this, many variables wind up to be telescope
-specific. In the past a simple stack based spectrum calculator was the
-basic data analysis system for SD data.
-Even more modern systems are essentially still of this nature.
- 
-For a collection of spectra that cover an area of the sky (the modern
-term is ``On-The-Fly'' (OTF) mapping), another step can be taken after
-the spectra have been calibrated, and that is gridding and mapping
-(imaging) these spectra into an image cube.
+  and designated via CTYPE4}.
+For telescopes that have frequency-switching or beam switching modes of observing, 
+the spectra at different reference frequencies, or positions, are gathered nearly simultaneously (switching faster than a few Hertz) and hence have a close relationship
+to each other in many of the slower varying characteristics of the data collection
+(for example pointing errors, sky variations, etc). One of the most common modes of 
+spectral line observing is position-switching where an "on" position is observed for
+a length of time (5-30 seconds) and then an "off" position is observed for the 
+same length of time, creating a pair of spectra which are utilized to make a final sky-subtracted spectrum.
 
-\begin{figure}[h]
+Singe dishes are often used to make maps of sources. This can be accomplished by
+observing a number of positions sequentially, or by scanning the telescope
+across the piece of the sky while taking data continuously, often called ``On-The-Fly'' (OTF) mapping. In mapping sources, it is typically important to then create a data cube
+of RA-Dec-Frequency to represent the data as a maps. The OFT mapping mode also
+adds the complexity of the "off" positions being defined post-observation when the 
+data can be examined to identify positions without emission.
+
+These types of characteristics of
+the spectral data are relevant to the design of the base level data structures.
+In addition, there is the question of the level of data granularity is available to the user and what derivative data products are created for storage and what products are only computed on demand.
+%  In the past a simple stack based spectrum calculator was the
+% basic data analysis system for SD data.
+% Even more modern systems are essentially still of this nature.
+ 
+\begin{figure}[ht]
 \centering
   \includegraphics[width=0.4\textwidth]{fig2.eps}
   \caption{\label{bintable} SDFITS BINTABLE: spectra data and meta-data.
@@ -116,18 +144,16 @@ the spectra have been calibrated, and that is gridding and mapping
 \end{figure}
 
 
-\section{Overview}
+\section{Overview of the GBT/GBO Spectral Data}
 
 The GBT/GBO\footnote{you will see a lot of documentation using GBT and
-  GBO interspersed} single dish processing software is reviewed in
-light of a more coherent workflow using python on the top level, and
-abandoning the IDL licensed software.\footnote{weather info is also
-  needed in some calibration procedures, making it still hard to work
-  offsite}
+  GBO interspersed} single dish processing software is reviewed here in
+light of the workflow requirement for python on the top level, and the assumption
+that the IDL licensed software will no longer be used for spectral line data analysis.
+% \footnote{weather info is also needed in some calibration procedures, making it still hard to work offsite}
 
-The current data format is SDFITS, and will continue to be used, as
-this is an astronomy wide industry standard, as well as a lot of
-investment of tools at GBO that write SDFITS files. Most of the raw
+The data format for the starting point of this memo is SDFITS. SDFITS is an astronomy wide industry standard and there is a significant
+investment in tools at GBO that write SDFITS files. Most of the raw
 data before it turns into SDFITS are actually also FITS tables, which
 are standardized at the GBO, but they will not concern on in this
 paper.
@@ -146,9 +172,8 @@ this.
 
 \section{Functionality}
 
-What is the functionality we would want from a SD data reduction
+What is the functionality we would want from a spectral data reduction
 package? Very briefly here are some items:
-
 
 \subsection{Functionality needed for a single spectrum}
 
@@ -194,15 +219,25 @@ package? Very briefly here are some items:
    Since the spectrum is made by a digital correlator, is there
       a fixed noise pattern that may be constant for hours or days
       that should be calibrated out of all data?
-    Is this done before the SDFITs stage?
+      Is this done before the SDFITs stage?
+
+\item  Co-adding spectra, after individual integrations have been calibrated. See also 2c.
+  \begin{itemize}
+  \item[{\bf a.}]   
+    Weighting is done by
+    $ \Delta\nu \Delta T T_{sys}^{-2} $, which a manual override option
+  \item[{\bf b.}]   
+
+  \end{itemize}
+      
 
 \item    Baseline removal:
    Set window for channels to be used for baseline calculation
    \begin{itemize}
   \item[{\bf a.}]   
-    polynomial fit up to 5th order
+    polynomial fit up to 5th order (example2 has 7th order; why limit?)
   \item[{\bf b.}]   
-    sine fit
+    sine fit (or any more appropriate functional base)
   \item[{\bf c.}]   
     fourier filter with upper limit specified in channels
   \item[{\bf d.}]   
@@ -213,7 +248,7 @@ package? Very briefly here are some items:
    keep array of cumulative removed baseline?
   \end{itemize}
 
-\item RFI removal:
+\item RFI removal: flagging and masking
   \begin{itemize}
   \item[{\bf a.}]  
    to be done from rawest data likely based on presence of narrow 
@@ -234,7 +269,9 @@ package? Very briefly here are some items:
     gaussian
   \item[{\bf d.}]   
    allow for NANs to be replace with values if there
-       are actual values within smoothing range.
+   are actual values within smoothing range.
+ \item[{\bf e.}]
+   Rebinning, subsample
   \end{itemize}
 
 \item Line parameters:
@@ -268,6 +305,12 @@ package? Very briefly here are some items:
 	     in spectrum each with a rest freq?
   \end{itemize}
 
+\item Versatile editing of headers (``hacking'' at your own risk)
+
+\item  Visualize spectra, a versatile interactive plotting tool is needed
+  that can handle overlaying fits and/or other spectra (the current plot cannot compare spectra easily,
+  only one plotting tool on screen)
+
   
 \end{enumerate}
 
@@ -275,19 +318,6 @@ package? Very briefly here are some items:
 \subsection{Functionality needed for collections of spectra}
 
 \begin{itemize}
-
-\item Deal with spectra on an individual (or group) basis [see above]
-  \begin{itemize}
-  \item Visualize spectra, a versatile interactive plotting tool is needed
-  that can handle overlaying fits and/or other spectra
-  \item Calibrate spectra (Freq, Pos, Nod, ...)
-  \item Flagging/Masking data
-  \item Co-adding
-  \item Baseline fitting and subtracting
-  \item Smoothing, Rebinning
-  \item Edit header (e.g. hack to fix problems)  
-  \item Fit models to spectra
-  \end{itemize}
 
 \item Good batch system for pipeline and/or scripts to define a workflow on one spectrum
   and then apply it to all
@@ -315,7 +345,7 @@ package? Very briefly here are some items:
   specific.
 \end{itemize}
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
   \includegraphics[width=\textwidth]{fig1.eps}
 \caption{\label{evolution} Evolution of the GBT analysis software?}
@@ -324,7 +354,7 @@ package? Very briefly here are some items:
 
 \section{Existing GBT code}
 
-We are faced with 3 existing packages: {\tt GBTIDL}, {\tt gbt-pipeline} and
+There are 3 primary existing GBT packages: {\tt GBTIDL}, {\tt gbt-pipeline} and
 {\tt gbtgridder}, of which the latter two are in python2. There is also
 a derived product, {\tt gbtpipe}, written by Erik Rosolowsky. All codes are
 publicly available. Some code overlap has been noticed in {\tt gbtpipe}.
@@ -341,27 +371,33 @@ the ``dialects'' that seem to exist in the SDFITS format are specific to the ins
   \item[{\bf region}]  : over many days and possibly RA/DEC
   \item[{\bf session}] : same 'day' continguous in time
   \item[{\bf block}]   : observation unit, typically in one SDFITS file (or related SDFITS files with VEGAS)
-  \item[{\bf scan}]    : integrations that belong together (few mins)
-  \item[{\bf integration}] : integration of a specific state (pointing, band, polarizations, ...)
+  \item[{\bf scan}]    : integrations that belong together (few mins) - a unified section in the SDFITS file
+  \item[{\bf integration}] : integration of a specific state (pointing, band, polarizations, ...) - can be scattered in the SDFITS file
   \item[{\bf phases}]    : the individual rows in SDFITS that make a specific integration.  In GBTIDL they are also
     referred to as a ``record''.
 \end{itemize}   
 
 
 In addition there are several ways how to calibrate SD spectra, broadly separated
-into position and frequency switching. Calibration also depends on the instrument used,
-and the SDFITS ``dialect'' will play a role in this.
+into position and frequency switching. See also \cite{braatz2009}.
+Calibration also depends on the instrument used,
+and the SDFITS ``dialect'' will play a role in this. 
 
 \begin{itemize}
 \item
   {\bf Need updated and better description of the following items, there should be 5 for GBT:}
 \item
-nodding:    a mirror like device make it look at a different "blank" sky
-nodding secondary. or are there other nodding options?
+  {\bf position:}   telescope physically looks at a different (hopefully blank) sky, in an OnOff (or OffOn) cyclic pattern.
+  Observing efficiency is only about 50\% in this mode.
 \item
-position:   telescope physically looks at a different "blank" sky?
+{\bf frequency:}  use a nearby part of spectrum for the ``Off''. Observing efficiency is about 100\%.
 \item
-frequency:  use a nearby part of spectrum to be able to baseline subtract
+  {\bf nodding:} like position switching, except there are two beams
+  that can look ON and OFF. The telescope only tracks the
+  source. During alternate cycles a beam will be used for ON, then OFF
+  etc. obtaining effectively 100\% observing efficiency.
+
+
 \end{itemize}
 
 OTF (e.g. \cite{2007AA...474..679M})
@@ -377,26 +413,27 @@ As a reminder, here is an example\footnote{taken from the GBTIDL Users' Guide}
 where you get a quick look and feel of the command line interface in GBTIDL:
 
 \begin{lstlisting}[language=bash]
-% gbtidl                         # Start GBTIDL from the unix prompt
-GBTIDL -> filein, 'myraw.fits'   ; open an SDFITS file
-GBTIDL -> summary                ; summary
-GBTIDL -> getfs, 9               ; get scan 9 freq. switched spectrum
+% gbtidl                         # Start GBTIDL from the unix shell prompt
+GBTIDL -> filein, 'myraw.fits'   ; Open an SDFITS file
+GBTIDL -> summary                ; Give a summary of the scans
+GBTIDL -> getfs, 9               ; Get scan 9 freq. switched spectrum
 GBTIDL -> setregion              ; Set region used to determine baseline (interactive)
 GBTIDL -> nfit,2                 ; Specify that a 2nd order baseline will be used
 GBTIDL -> baseline               ; Fit and subtract a baseline
 GBTIDL -> fitgauss               ; Fit a Gaussian profile to the plotted spectrum.
-GBTIDL -> stats                  ; show statistics for the spectrum
+GBTIDL -> stats,100,2000         ; Show statistics for the spectrum from channel 100,2000
 GBTIDL -> print_ps               ; Write the current spectrum to a postscript file
+GBTIDL -> write_asci, 'sp.tab'   ; Write an ascii spectrum (2 columns)
 GBTIDL -> fileout, 'mydata.fits' ; Specify the output file name for saved data
 GBTIDL -> keep                   ; Save the spectrum currently displayed
-GBTIDL -> exit                   ; Exit GBTIDL
+GBTIDL -> exit                   ; Exit GBTIDL, back to the shell
 
 \end{lstlisting}
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
   \includegraphics[width=0.75\textwidth]{gbtidl1.png}
-\caption{\label{spectrum1} Example GBTIDL spectrum after baseline, not matching the example code!}
+\caption{\label{spectrum1} Example GBTIDL spectrum after baseline subtraction. This example is not matching the example code!}
 \end{figure}
 
 
@@ -436,7 +473,122 @@ matplotlib where needed.
 
 For specutils, the specviz package will need to be investigated, but
 should be noted this is not in astropy but still under
-spacetelescope.
+{\tt spacetelescope}.
+
+\subsection{pyspeckit}
+
+{\tt pyspeckit} was based on an earlier version of {\tt specutils},
+and is actually very functional and complete accross the full
+O/IR and radio spectrum, and includes plotting and fitting. In theory
+a drop-in replacement for GBTIDL! It even provides an example of the reduction
+of a GBT nodding and comes with a gbt reader. This reader has the
+data reduction procedure(s) included as well.
+
+{\tt pyspeckit} has a very different processing style from the one we
+see in GBTIDL. For example, a single SDFITS file is read into a
+{\bf  session}, which consists of various {\bf targets} (based on the name
+of the target/object. Each target consists of a series of {\bf blocks},
+which translate to the combination of ON/OFF, Sampler
+name and maybe more TBD.
+
+Here are some examples of such sessions. First
+a simple ``plot a spectrum'' example:
+
+\footnotesize
+\begin{lstlisting}[language=python]
+  # from test_3c286.py
+  # plotting and fitting spectra
+  from pyspeckit.spectrum.readers import gbt
+  
+  session = gbt.GBTSession('3C286.fits')
+  session.load_target('3C286')
+  target = session['3C286']
+  sp = target.blocks['A13OFF2'][0] # there are 4 identical spectra
+  sp.xarr.convert_to_unit('km/s')
+  sp.plotter(xmin=207408,xmax=207598)
+  sp.plotter.label(verbose_label=True)
+  stats = sp.stats(statrange=(-20+207458,20+207458))
+
+
+  
+\end{lstlisting}
+\normalsize
+
+and now with some processing added
+
+\footnotesize
+\begin{lstlisting}[language=python]
+  # from jd_test.py
+  # with some processing
+  from pyspeckit.spectrum.readers import gbt
+  
+  # declare our session name and read the file
+  A029 = gbt.GBTSession('AGBT11B_029_01.raw.acs.fits')
+
+  # let's see what's in it
+  print(A029)
+
+  # reduce one of the targets
+  ob1 = A029.reduce_target('003918.9+402158.4')
+  # you can also access ob1 as A029.target['003918.9+402158.4'] or simply A029['003918.9+402158.4']
+
+  # now see what it contains
+  print(ob1.spectra.keys())
+
+  # Average polarizations & feeds for each IF
+  # (this may be poorly named)
+  ob1.average_IFs()
+  # again, check on the contents
+  print(ob1.spectra.keys())
+  
+  # now plot IF0
+  ob1['if0'].plotter()
+  
+  # convert to velocity units, and replot
+  ob1['if0'].xarr.convert_to_unit('km/s')
+  ob1['if0'].plotter()
+  
+  # crop the spectrum and replot
+  ob1['if0'].crop(-600,-525,units='km/s')
+  ob1['if0'].plotter(reset_xlimits=True)
+  ob1['if0'].specfit()
+  
+  # Take advantage of python!
+  import pylab
+  pylab.figure() # create a new figure
+  pylab.imshow(ob1.blocks['A9ON1'].data)
+  
+  # Start getting a bit tricky...
+  # Reduce ALL spectra (this can take time)
+  A029.reduce_all()
+  print(A029)
+  
+  # plot all the reduced IF0's in different windows
+  for target_name in A029.targets:
+      A029['target_name']['if0'].plotter()
+
+  
+\end{lstlisting}
+\normalsize
+
+A jupyter notebook lets you play with this interface.
+
+\subsection{specutils}
+
+{\tt specutils} is an {\tt astropy} affiliated package that provides
+a container for 1D-spectra, and I/O utilities for a large sample
+of readers. In our notebook you can now find an example how this
+can be done for GBT's SDFITS dialect.
+
+Without additional packages such as {\tt specviz} and {\tt specreduce},
+{\tt specutils} does not provide a full framework, in fact, both are
+examples not well suited for our GBT project.
+
+The basic {\tt specutils} also has some serious issues out of the box,
+mostly related to the baggage of astropy units. For example,
+doing an ON-OFF calibration was forbidden because the spectral axes
+were not the same! A jupyter notebook lets you try this out.
+
 
 
 \section{Data}
@@ -459,13 +611,14 @@ EDGE data. The {\tt sdheader} script tries to assembles this knowledge.
 ``SINGLE DISH''. Each row in the table is a different ``phase'' from
 the observation. Each row contains the DATA (the spectrum) and lots of
 associated header variables. Since they are in a BINTABLE, they are
-called FIELDS (the columns), of which DATA is just one. The other fields
-will come in different names: meta-data, header variables, keywords, columns etc.
+called FIELDS (the columns), of which DATA is just one. The other words for
+FIELDS are: meta-data, header variables, keywords, columns etc.
 These are normally varying as function of time, since they are a column in
 the BINTABLE. Some SDFITS writers know that a certain column does not change,
 and you will find it hidden as a keyword in the FITS header and we sometimes
 call those a virtual column. Examples of those are TELESCOP, PROJID, BACKEND,
-SITELONG, SITELAT, SITEELEV.
+SITELONG, SITELAT, SITEELEV\footnote{Given the nature of FITS, those will be in ASCII,
+not binary encoded as they would be in a BINTABLE}.
 
 \subsection{Regression testing}
 
@@ -480,14 +633,16 @@ or know about:
 \item
   The 2 examples in the SDFITS standards page (TREG\_091209.cal.acs.fits [2009], Parkes\_GASS.fits [2010?])
 \item
-  The example in the pyspeckit packate (3C286.fits [2012])
+  The example in the pyspeckit packate (3C286.fits [2012]) - not good, it's just one processed spectrum,
+  also has non-standard columns such as True instead of 'T' for booleans.
 \item  
   The 2nd example in the pyspeckit package, AGBT11B\_029\_01.raw.acs.fits, absent from archives , but I found a calibAGBT02C\_023\_03.fits [2005]
 \item
   M81/M82 2003 data as described on\newline
   \url{https://safe.nrao.edu/wiki/bin/view/GB/Data/M81ExampleExectution}
 \item
-  EDGE survey data via Tony Wong NGC2347.fits in ``keep'' format, (AGBT05C\_051\_14/) raw to come [2016]
+  EDGE survey data via Tony Wong, e.g. NGC2347.fits in ``keep'' format, (AGBT05C\_051\_14/). These are
+  VEGAS A,B,C.   [2016]
 \item
   ARGUS data: AGBT17B\_151\_01.raw.vegas/AGBT17B\_151\_01.raw.vegas.A.fits (A..H) [2017]
 \item
@@ -883,10 +1038,10 @@ for i=g.range(51,57,2):
 g.ave()
 
 g.chan()
-g.nregion,[3300,14800,17900,31000])
+g.nregion,[3300,14800,17900,31000])    # idl insists this to be in channel
 g.nfit(3)
 g.sety(0.2, 0.5)
-g.bshape()
+g.bshape()       # nice to show the fit
 g.baseline()
 g.unzoom()
 
@@ -908,13 +1063,21 @@ if you like the IDL one liner for-loops, they work in python as well:
 
 will work just as well.
 
-A comment on the BINTABLE data structure. This data has 352 rows. There are 8 scans (SCAN 51..58) The odd scans
-have PROCSEQN=1, the even ones are PROCSEQN=2.  For each scan the first 22 are sampler A9, the second one sampler A13.
-Data are paired up with two phases (one CAL=T and one CAL=F).   Thus the data is 5-dimension and can see written
-as follows:
+A comment on the BINTABLE data structure. This data has 352
+rows. There are 8 scans (SCAN 51..58) The odd scans have PROCSEQN=1, representing the
+``ON'' position, the even ones are PROCSEQN=2, representing the ``OFF''.
+For each scan the first 22 are sampler
+A9 (the XX pol), the second one sampler A13 (the YY pol).  Data are paired up with two phases
+(one CAL=T and one CAL=F).  Thus the data is 5-dimensional and can see
+written as follows:
 
 $$
 DATA(cal[2],int[11],sampler[2],procseqn[2],scan[4])
+$$
+
+after calibration, we have true spectra, which could be viewed as 3-dimensional:
+$$
+SPECTRA(int[11],sampler[2],scan[4])
 $$
 
 \subsection{Example 2: Frequency Switching}
@@ -993,7 +1156,7 @@ $$
 
 
 \begin{lstlisting}[language=python]
-g.filein('I1481.fits')
+g.filein('IC1481.fits')
 g.getnod(182, plnum=0)
 g.accum()
 g.getnod(182, plnum=1)
@@ -1123,39 +1286,40 @@ def myscale(g, factor=1.0):
 \subsection{Plotting raw data}
 
 This example can be found in {\tt gbtoy/bin/sdrawsp}, plotting a raw spectrum. No units, just
-Intensity vs. Channel number using low level astropy:
+Intensity vs. Channel number using low level astropy. Very fast. You can either plot all spectra
+stacked, or select one by it's row number.
 
 \begin{lstlisting}[language=python]
-from astropy.io import fits
-import numpy as np
-from matplotlib import pyplot as plt
 import sys
+import numpy as np
+from astropy.io import fits
+from matplotlib import pyplot as plt
 
-fname = sys.argv[1]                    # grab file name, 
-hdu = fits.open(fname)                 # get the HDU's
-data2 = hdu[1].data                    # point at the BINTABLE
-nrow = len(data2)                      # find how many rows (``phases'')
+fname = sys.argv[1]        # grab file name, 
+hdu = fits.open(fname)     # get the HDU's
+data2 = hdu[1].data        # point at the BINTABLE
+nrow = len(data2)          # find how many rows
+nchan = len(data2[0])      # number of channels
 
 if len(sys.argv) < 3:
-    chans = list(range(nrow))
+    chans = list(range(nrow))     # plot all channels
 else:
-    chans = [int(sys.argv[2])]
+    chans = [int(sys.argv[2])]    # plot one channel
 
+print("Plotting %d spectra of nchan %d" % (nrow,nchan))
+
+chan=np.arange(nchan)    
 plt.figure()
-nchan = 0
 for i in chans:
     sp = data2[i]['DATA']
-    if nchan == 0:
-        nchan = len(sp)
-        print("Plotting %d spectra of nchan %d" % (nrow,nchan))
-        chan=np.arange(nchan)
     plt.plot(chan,sp)
+plt.title("spectra for %s" % fname)        
 plt.show() 
 \end{lstlisting}
 
 A zoomed in version of the 352 raw spectra ``stacked'' are in figure \ref{spectrum2}.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
   \includegraphics[width=\textwidth]{sdrawsp1.png}
   \caption{\label{spectrum2} Zoomed section of the stacked raw spectra of ngc5291 made with {\tt sdrawsp}.
@@ -1163,11 +1327,32 @@ A zoomed in version of the 352 raw spectra ``stacked'' are in figure \ref{spectr
     You will later see the galaxy is near channel 16000, in the middle of the spectrum.}
 \end{figure}
 
+\subsection{Calibration}
 
-\subsection{Case study 1: ngc5291}
+Most calibrations in GBTIDL occur with the well known ON/OFF procedure
 
-Lets start with GBTIDL:
+$$
+T_A = T_{sys} { { (ON-OFF)} \over {ON} }
+$$
 
+In the case studies below we shall try and reproduce this, where possible, with our toy scripts.
+One thing to note is the weighting in case integrations are averaged. Normally weights are based on
+$$
+       \Delta\nu \Delta T T_{sys}^{-2}
+$$
+       unless the {\tt /eqweight} option is given (and the documentation doesn't say this, but presumably
+       this only applies to the $T_{sys}$ portion of this equation.
+
+\subsection{Case study 1: Classic ngc5291}
+
+This classic ``Position Switching'' data is directly taken from the GBTIDL manual,
+with the now classic spectrometer frontend.  There is also a jupyter notebook,
+{\tt gbtoy/nb/n5292.ipynb} where we try to reproduce some of the numbers listed here.
+
+
+Lets start with a GBTIDL session:
+
+\footnotesize
 \begin{lstlisting}
 
 GBTIDL -> filein, 'ngc5291.fits' 
@@ -1183,12 +1368,13 @@ GBTIDL -> summary
     57          NGC5291   4386.0   OnOff   1    1.420   1   11   1  202.1  17.5
     58          NGC5291   4386.0   OnOff   2    1.420   1   11   1  202.7  17.6
 \end{lstlisting}
+\normalsize
 
 So the user sees 8 scans, but they come in pairs as defined by ``Seq'' (PROCSEQN).  The
 PS calibration is done with the {\tt getps} command. They come in pairs, so we only
 loop over 4 ``odd'' scans (``even'' scans would produce exactly the same result).
 {\tt plnum} refers the XX and YY polarization, which for PS data are hidden in the SAMPLER
-meta data.
+meta data, and listed in CRVAL4.
 
 \begin{lstlisting}
 GBTIDL -> for i=51,57,2 do begin getps, i, plnum=0 & accum & end  
@@ -1223,7 +1409,8 @@ GBTIDL -> write_ascii,'n5291_idl.tab'
 \end{lstlisting}
 
 On the screen will now be pretty nice spectrum, that you can zoom in on using
-the cursor. See paper fig5 - not placed here yet.
+the cursor middle mouse button. See paper fig5 - not placed here yet.
+The {\tt list} command gives some lower leven information on each row:
 
 \begin{lstlisting}  
 GBTIDL -> list,0,45
@@ -1253,10 +1440,10 @@ GBTIDL -> list,0,45
 \end{lstlisting}
 
 This data has 352 rows in the SDFITS file, organized as follows (see also the GBTIDL
-conversation below):  There are 8 scans, each of which has 11 integrations, each of
+conversations listed here):  There are 8 scans, each of which has 11 integrations, each of
 which has 2 samplers (A9 and A13, which are the XX (-5) and YY (-6) pols), each of which has
-two phases of CAL=T and CAL=F. Hence 8 x 11 x 2 x 2 = 352. Another way of writing this in a
-5-dimensional array is $DATA(ncal,nint,nsampler,nprocseqn,nscan)$.
+two phases of CAL=T and CAL=F. Hence 8 x 11 x 2 x 2 = 352 rows. Another way of writing this in a
+5-dimensional array is $DATA(cal,int,sampler,procseqn,scan)$.
 
 Each phase (record) has an DURATION
 of 5.0475 secs, but the EXPOSURE varies between 4.81 and 4.91 secs, but mostly bimodal
@@ -1264,10 +1451,10 @@ at about 4.86 and 4.91 secs.  Between each scan there was about a 35 secs pause,
 whole observation took from 2:05:58.00 to 2:28:23.93, about 24 minutes.
 
 
-Although this {\tt list} command gives a nice summary, it only shows typicall 1/4 of the ``phases'' you will see
-in the SDFITS file, skipping over on/off/calon/caloff and pols.
-The {\tt gbtoy/bin/sdlist} command will show you all you can possible want. Also note that our command will show you
-that the SDFITS file is not always time sorted.
+The {\tt gbtoy/bin/sdlist} command will show you all you can possibly
+want to see. It will also show  that the SDFITS file is
+not time sorted. Any code should never assume time sorted data, but base
+analysis on the meta-data.
 
 
 \begin{lstlisting}
@@ -1278,8 +1465,14 @@ that the SDFITS file is not always time sorted.
   ave
   stats,6000,12000
   ; -> 0.29487  0.015592  0.24204     0.35086
-
   write_ascii,'n5291_idl.tab'
+
+  ; repeat for equal weights
+  for i=51,57,2 do begin getps, i, plnum=0,/eqweight & accum & end  
+  for i=51,57,2 do begin getps, i, plnum=1,/eqweight & accum & end
+  ave
+  stats,6000,12000
+  ; -> 0.29499  0.015594  0.24217     0.35120
 
   getps, 51, plnum=0
   ; -> Tsys:  19.35    19.73
@@ -1331,17 +1524,14 @@ that the SDFITS file is not always time sorted.
   
 \end{lstlisting}
 
+In figure \ref{waterfall} we show the result of running {\tt sdimage},
+which creates a 2D image ``Waterfall Plot'' with channels along X and
+time along Y. The CARTA program in particular can also be a good
+diagnostic to look at the data quality.  The ordering of the different
+``phases'' that go into an ``integration'' for a ``scan'' can be
+easily seen in this way of viewing the data.
 
-
-
-
-
-In figure \ref{waterfall} we show the result of running {\tt sdimage}, which creates a 2D image ``Waterfall Plot''
-with channels along X and time along Y. The CARTA program in particular can also be a good diagnostic to look at the data quality.
-The ordering of the  different ``phases'' that go into an ``integration'' for a ``scan'' can be easily seen
-in this way of viewing the data.
-
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
   \includegraphics[width=\textwidth]{ngc5291_2a.png}
   \includegraphics[width=\textwidth]{ngc5291_2b.png}
@@ -1351,14 +1541,250 @@ in this way of viewing the data.
     Compare this to figure \ref{bintable}.}
 \end{figure}
 
-\subsection{Low Level GBTIDL}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{n2347-fig1.png}
+\caption{\label{n2347a} NGC2347: GBTIDL reduced spectra for the 9 and 3 scan datasets on the left,
+  the weighted average on the right. The RFI (?) is present in both, depite a 5 day DATE-OBS difference}
+\end{figure}
 
-In order to reproduce this example, we need to consider the following calibration procedure:
-$$
-T_A = T_{sys} { { (ON-OFF)} \over {ON} }
-$$
 
 
+
+\subsection{Case study 2: EDGE NGC2347}
+
+These data are from 2016, and using the new VEGAS backend. The
+particular galaxy was observed twice, separated by 5 days. For each
+{\bf session} we have 3 VEGAS fits files, labeled A, B and C after the
+respective VEGAS banks. These
+turn out to be different IF settings, with a bandwidth of 100 MHz
+each, shifted by only 25MHz between the files, so in total we have 150
+MHz, which is around 15,000 km/s, covering the entire EDGE survey.
+
+Each SDFITS file contains several EDGE galaxies in {\tt Track}
+mode, to be processed with GBTIDL's {\tt setsigref} procedure,
+and 3C147 in {\tt OnOff} mode, which presumably can be used for
+calibration.  Depending on the redshift, the galaxy might be absent in one
+or more of the 3 SDFITS files. For NGC2347, at 4300 km/s, it is present
+in all three. There is no gain of averaging these, since it is just the IF
+that was modified. Another peculiarity of these data is the sequency of {\bf sig}
+and {\bf ref}. They don't come in pairs, but in sets of 3, where the middle one
+is always the {\bf ref}.
+
+\footnotesize
+\begin{verbatim}
+                     SOME NOTES
+ 
+# gbtoy script to decipher some of the headers
+  sdlist AGBT15B_287_35.raw.vegas.A.fits DATE-OBS OBJECT CAL SAMPLER SCAN IFNUM | grep NGC2347 | less
+
+# this gives us the following overall info
+
+   basename           starting DATE-OBS        ending DATE-OBS       scans    records
+AGBT15B_287_35     2016-01-05T05:26:46.00 - 2016-01-05T05:59:35.89   11-19     1476
+AGBT15B_287_39     2016-01-10T06:41:26.00 - 2016-01-10T06:52:09.89    8-10      492
+
+SIG is always 'T'
+CAL alternates 'T','F'
+PROCSEQN is always 1
+IFNUM is always 1,0,2 for the A,B and C file.
+FDNUM is always 0
+EXPOSURE is 2.5"
+DATA-OBS has 4 rows in same time, then always increases (covering the calOn/calOff and XX/YY) 
+
+in the A file:   SAMPLER cycles through A1_0, A2_0 (the XX and YY) - ifnum=1  1374605899.0 -3051.7578125
+       B         SAMPLER cycles through B1_0, B2_0                   ifnum=0  1399605899.0
+       C         SAMPLER cycles through C1_0, C2_0                   ifnum=2  1424605899.0
+
+thus the data (in 3 files) has this dimensionality:
+
+  DATA(CAL=2, SAMPLER=2, INT=41, SCAN=3, IF=3)
+
+(the _35 file has 3 scans, the _39 file has 9 scans, surely a coincidence)
+
+
+GBTIDL: summary
+  Scan           Source      Vel    Proc Seq    RestF nIF nInt nFd     Az    El
+-------------------------------------------------------------------------------
+    11          NGC2347   4388.8   Track   1    1.445   1   41   1    3.2  63.7
+    12          NGC2347   4388.8   Track   1    1.445   1   41   1    4.5  63.6
+    13          NGC2347   4388.8   Track   1    1.445   1   41   1    1.4  63.7
+    14          NGC2347   4388.8   Track   1    1.445   1   41   1    0.5  63.8
+    15          NGC2347   4388.8   Track   1    1.445   1   41   1    1.9  63.7
+    16          NGC2347   4388.8   Track   1    1.445   1   41   1  358.7  63.8
+    17          NGC2347   4388.8   Track   1    1.445   1   41   1  357.9  63.7
+    18          NGC2347   4388.8   Track   1    1.445   1   41   1  359.2  63.8
+    19          NGC2347   4388.8   Track   1    1.445   1   41   1  356.1  63.7
+
+     8          NGC2347   4388.8   Track   1    1.445   1   41   1  342.0  61.2
+     9          NGC2347   4388.8   Track   1    1.445   1   41   1  343.1  61.5
+    10          NGC2347   4388.8   Track   1    1.445   1   41   1  340.7  60.7
+
+ 
+GBTIDL: list
+ #INDEX           SOURCE       SCAN PROCEDURE POL IFNUM FDNUM        INT SIG CAL
+
+    200          NGC2347          8     Track  XX     1     0          0   T   F
+    201          NGC2347          8     Track  XX     1     0          0   T   T
+    202          NGC2347          8     Track  YY     1     0          0   T   F
+    203          NGC2347          8     Track  YY     1     0          0   T   T
+    204          NGC2347          8     Track  XX     1     0          1   T   F
+    205          NGC2347          8     Track  XX     1     0          1   T   T
+    206          NGC2347          8     Track  YY     1     0          1   T   F
+    207          NGC2347          8     Track  YY     1     0          1   T   T
+...
+    360          NGC2347          8     Track  XX     1     0         40   T   F
+    361          NGC2347          8     Track  XX     1     0         40   T   T
+    362          NGC2347          8     Track  YY     1     0         40   T   F
+    363          NGC2347          8     Track  YY     1     0         40   T   T
+    364          NGC2347          9     Track  XX     1     0          0   T   F
+    365          NGC2347          9     Track  XX     1     0          0   T   T
+    366          NGC2347          9     Track  YY     1     0          0   T   F
+    367          NGC2347          9     Track  YY     1     0          0   T   T
+...
+    688          NGC2347         10     Track  XX     1     0         40   T   F
+    689          NGC2347         10     Track  XX     1     0         40   T   T
+    690          NGC2347         10     Track  YY     1     0         40   T   F
+    691          NGC2347         10     Track  YY     1     0         40   T   T
+    692         UGC03973         11     Track  XX     1     0          0   T   F
+
+\end{verbatim}
+\normalsize
+
+
+The GBTIDL reduction of the spectra uses the {\tt getsigref} procedure
+
+\begin{lstlisting}[language=bash]
+
+; example EDGE data reduction (see edge.pro)
+
+.run edge
+
+filein,'AGBT15B_287_35.raw.vegas.A.fits'
+edge,11,19,ifnum=1
+velo
+setx,3900,4900
+sety,-0.05,0.25
+stats,2500,3500
+; 0.039565    0.039540    0.010945
+hanning,/decimate
+stats,2500,3500
+; 0.039569    0.039840   0.0066960 
+
+chan
+nregion,[2500,3800,4400,5100]
+nfit,3
+bshape
+baseline
+sety,-0.05,0.15
+velo
+setx,4000,4800
+write_ascii,'test35A.tab'
+
+\end{lstlisting}
+
+we are still faced with the other shorter integration (3 scans) dataset. They should be combined to get a
+slightly better signal to noise.
+
+\subsection{Case study 3: ARGUS IC0342}
+
+ARGUS data (the 4 x 4 pixel multi-beam frontend for GBT) has been
+obtained for IC0342 (Li and Harris, 2017). These OTF data are structured very
+differently from what we've seen before, and in fact, ``cannot'' be
+calibrated with GBTIDL.  Instead, {\tt gbtpipe} has been used for this by their team.
+Most importantly, there are no clearly marked ``OFF'' positions, they are determined from the
+edges of the field where no emission is assumed (typically the first and last 10\% of a {\bf scan}).
+
+First, each observation comes in 8 SDFITS
+files, something akin to the EDGE data we discussed, and labeled A..H,
+e.g. {\tt AGBT17B\_151\_01.raw.vegas.A.fits}. This is purely because the VEGAS backend
+was used, but in the case of ARGUS each file is not a different IF, but two different
+beams (pointings) of ARGUS.  More Details below.
+
+\bigskip
+This data is of sufficient complexity w.r.t. GBTIDL that it is futile to try and reproduce it,
+but here are some notes on the SDFITS file(s):
+
+\footnotesize
+\begin{verbatim}
+
+8 files of 72MB each, totalling about 580 MB
+CAL is always 'F'
+SIG is always 'T'
+CRVAL4 is always -5, meaning only XX polarization
+SAMPLER is now used for which of the 16 pointings is used (labele A1_0, A2_0, ... H1_0, H1_1)
+FDNUM also labels the pointings (0..15) so is redundant with SAMPLER
+Also note that FEED is FDNUM + 1 , so FEED is 1..16
+Most EXPOSURE values are near 0.49", with apparently a 2000Hz blanking interval
+1024 channels between 108.5 and 110.0 GHz
+GBT Beam is about 5" at 3mm.
+During the observation the RA-DEC grid rotates
+SCAN does vary from 18-80, e.g. TRGTLONG and TRGTLAT will change.
+
+In addition to IC0342, the VANE and SKY are included for calibration.
+An OTF mapping has been used
+
+Each of the A..H SDFITS files has 15792 rows.
+
+    0 '2017-09-29T07:03:41.00' 'VANE'
+   39 '2017-09-29T07:03:50.51' 'VANE'
+   ..
+   40 '2017-09-29T07:04:07.00' 'SKY'
+   79 '2017-09-29T07:04:16.51' 'SKY'
+   ..
+   80 '2017-09-29T07:04:31.00' 'IC0342'
+10447 '2017-09-29T07:53:53.53' 'IC0342'
+   ..
+10448 '2017-09-29T07:54:10.00' 'VANE'
+10487 '2017-09-29T07:54:19.51' 'VANE'
+   ..
+10488 '2017-09-29T07:54:36.00' 'SKY'
+10527 '2017-09-29T07:54:45.51' 'SKY'
+   ..
+10528 '2017-09-29T08:05:01.00' 'VANE'
+10567 '2017-09-29T08:05:10.51' 'VANE'
+   ..
+10568 '2017-09-29T08:05:27.00' 'SKY'
+10607 '2017-09-29T08:05:36.51' 'SKY'
+   ..
+10608 '2017-09-29T08:05:52.00' 'IC0342'
+15791 '2017-09-29T08:30:19.53' 'IC0342'
+
+\end{verbatim}
+\normalsize
+
+\subsection{Summary of all use cases}
+
+Here we summarize again the DATA structure associated with the studied
+SDFITS files. Here we also add a semi-colon in the dimension after
+which time will increase. These are typically when a new scan
+begins, either with or without a associated PROCSEQN (proc) sequence.
+
+
+Let us stress again, this is {\bf not} a data structure used anywhere
+a code, though it could be, but it is just a convenient way to
+summarize it. Any data processing should be independant of this, and
+should follow how the meta-data is tagged.
+
+\footnotesize
+\begin{verbatim}
+PS  NGC5291     DATA(cal,int,pol; proc,scan)                 352   46   32768
+                     2   11  2    2    4
+
+FS  W3OH        DATA(sig,cal,int,ifnum,pol; scan)            480   46   16384
+                     2   2   6   2     2    5
+
+NOD IC1481      DATA(cal,int,pol,sampler; proc,scan)         512   46    8192
+                     2   4   2   4        2    4
+
+TP  NGC2347     DATA(cal,pol,int; scan,if)                  8560   70   32768  (x 3 x 2)
+                     2   2   41   9    3
+
+OTF IC0342      DATA(sampler,int; scan)                    15792   74    1024  (x 8)
+                     2       144, 54
+
+\end{verbatim}
+\normalsize
 
 \section{Software}
 
@@ -1438,7 +1864,40 @@ This is more the new style, many files in a directory. We have 6 files totalling
 Tony Wong has provided an IDL script that might help, but so far this has been more useful to check the I/O speed and on the question
 for the need for an index file.
 
+\section*{Glossary}
 
+\begin{itemize}
+
+\item calON, calOFF - states (phases) of an integration procedure where a noise diode of known flux is inserted in the beam, for calibration
+
+\item FS - Frequency Switching observing mode
+
+\item integration - 
+
+\item IF - Intermediate Frequency - mix in frequency to downconvert
+  
+\item M\&C - Monitor and Control, often references in e.g. {\bf M\&C scan number }
+
+\item ON/OFF - The modes where either in FS or PS the signal is ON or OFF the source
+
+\item OTF - On-The-Fly , observing mode where data is continuesly obtained while telescope is scanning
+
+\item phase - an integration is taken up by several phases (e.g. calOn,calOff) where data need to be combined in order to make an integration
+
+\item PS - Position Switching observing mode
+
+\item SD - Single Dish
+
+\item ref - Reference measurement, another term for the ``OFF'' portion of a data taking cycle
+
+\item sig -   Signal measurement,   another term for the ``ON'' portion of a data taking cycle
+
+\item TP - Total Power - outside of the single dish community the term TP and SD are sometimes used interchangeably. 
+
+  
+
+  
+\end{itemize}
 
 
 \end{document}
