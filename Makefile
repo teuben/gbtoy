@@ -4,6 +4,9 @@
 gbtoy:
 	git clone https://git.overleaf.com/5ddecdf65bbba7000140ea5f gbtoy
 
+pdf:  gbtoy.pdf 
+
+
 # this is old
 gbtoy.pdf:   gbtoy.tex gbtoy.bib
 	pdflatex gbtoy
@@ -38,15 +41,18 @@ specutils:
 specreduce:
 	git clone https://github.com/astropy/specreduce
 
-pyspeckit:
-	git clone https://github.com/pyspeckit/pyspeckit
-
 pyspeckit-tests:
 	git clone https://github.com/pyspeckit/pyspeckit-tests
 
-pyspeckit2:
+# my development
+pyspeckit:
 	git clone https://github.com/teuben/pyspeckit
 	(cd pyspeckit; git checkout teuben-gbt)
+	@echo pip install -e pyspeckit
+
+# the upstream
+pyspeckit2:
+	git clone https://github.com/pyspeckit/pyspeckit pyspeckit2
 
 specviz:
 	git clone https://github.com/spacetelescope/specviz
@@ -57,10 +63,11 @@ spectral-cube:
 statcont:
 	git clone https://github.com/radio-astro-tools/statcont
 
-gbt-pipeline:
-	git clone https://github.com/GreenBankObservatory/gbt-pipeline
-
 gbt-pipeline2:
+	git clone https://github.com/GreenBankObservatory/gbt-pipeline gbt-pipeline2
+
+# my development
+gbt-pipeline:
 	git clone https://github.com/teuben/gbt-pipeline
 	(cd gbt-pipeline; git checkout python3)
 
