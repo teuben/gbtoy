@@ -5,6 +5,8 @@
 __doc__ = """
    Convert SDFITS to FITS image. Each spectrum is stacked.
    Thus the final image is nchan x nrows (see sdheader)
+
+   This is also called a waterfall plot.
 """
 
 
@@ -195,6 +197,18 @@ def inta(value):
         if not c.isdigit():
             break
     return int(value[:i])
+
+
+def my_stats(data):
+    """
+    for regression
+    """
+    print(data.shape)
+    mean = data.mean()
+    rms  = data.std()
+    dmin = data.min()
+    dmax = data.max()
+    return (mean,rms,dmin,dmax)
     
     
 header1 = hdu[0].header
@@ -236,15 +250,38 @@ for i in range(1,len(hdu)):
         if h not in h_sdfits:
             print('UNKNOWN3: Ext header',h)
     print("HDU-%d SINGLE DISH %d rows x %d cols x %d chans" % (i+1,nrows,ncols,nchan))
-    data2 = np.zeros(nchan*nrows).reshape(nrows,nchan)
+    data2 = np.zeros(nchan*nrows, dtype=np.float32).reshape(nrows,nchan)
     d = hdu[i].data
     for j in range(nrows):
         data2[j] = d[j]['DATA']
-    hdu2 = fits.PrimaryHDU(data2)
-    hdul = fits.HDUList([hdu2])
     fname = sdfits.replace('.fits','_%d.fits' % (i+1))
-    print("Writing ",fname)
-    hdul.writeto(fname)
+
+    if True:
+        print("another test here")   
+
+    if False:
+        # compute the stats for regression testing
+        # whole waterfall image
+        (mean,rms,dmin,dmax) = my_stats(data2)
+        test_new =  "%s %s %s %s" % (repr(mean),repr(rms),repr(dmin),repr(dmax))
+        print("#      file          mean      rms     datamin      datamax")
+        print("STATS: %s %s" % (fname,test_new))
+
+        # first record
+        (mean,rms,dmin,dmax) = my_stats(data2[0])        
+        test_new =  "%s %s %s %s" % (repr(mean),repr(rms),repr(dmin),repr(dmax))
+        print("#      file          mean      rms     datamin      datamax")
+        print("STATS: %d %s" % (0,test_new))
+    
+    if True:
+        hdu2 = fits.PrimaryHDU(data2)
+        hdul = fits.HDUList([hdu2])
+        print("Writing ",fname)
+        hdul.writeto(fname)
     
 
 
+"""
+8.6 for all 6 files and full stats
+6.6 for no stats
+"""
