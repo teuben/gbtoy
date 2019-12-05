@@ -36,3 +36,5 @@ using the system conda. See Makefile for targets.
 * https://sourceforge.net/p/aoflagger/wiki/Home/ aoflagger
 
 * http://www.mrao.cam.ac.uk/~rachael/specx/ SpecX - part of starlink (JCMT, 2002)
+
+* https://github.com/timj/aandc-gsdd Jenness et al. paper on single dish data formats
