@@ -29,29 +29,20 @@ if not os.path.exists(sdfits):
 hdu = fits.open(sdfits)
 data2 = hdu[1].data
 nrow = len(data2)
+nchan = len(data2[0]['DATA'].ravel())
+print("Finding %d raw spectra with %d channels for %s" % (nrow,nchan,sdfits))
 
-chans = []
+rows = []
 for arg in sys.argv[2:]:
-    chans.append(int(arg))
-if len(chans) == 0:
-    chans = list(range(nrow)) 
+    rows.append(int(arg))
+if len(rows) == 0:
+    rows = [0]
 
-print("Plotting %d raw spectra for %s" % (len(chans),sdfits))
+print("Plotting %d raw spectra with %d channels for %s" % (len(rows),nchan,sdfits))
 plt.figure()
-nchan = 0
-for i in chans:
-    sp0 = data2[i]['DATA']             # the 'off' spectrum
-    if len(chans) == 1:
-        sp1 = data2[i+1]['DATA']       # the 'on'  spectrum    
-    if nchan == 0:
-        nchan = len(sp0)
-        print("Plotting %d spectra of nchan %d" % (nrow,nchan))
-        chan=np.arange(nchan)
-    if len(chans) > 1:
-        sp  = sp0
-    else:
-        sp = (sp1-sp0)/sp0      # (on - off)/off - no calibration
-        
+chan=np.arange(nchan)
+for i in rows:
+    sp = data2[i]['DATA'].ravel()
     plt.plot(chan,sp)
 plt.show()
 
