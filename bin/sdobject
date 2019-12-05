@@ -1,4 +1,16 @@
 #! /usr/bin/env python
+#
+#   Although not exactly the same, this routine summarizes the 99 EDGE fits files in 104GB in 4' (240")
+#   17.043u 12.084s 4:07.91 11.7%   0+0k 3962048+32io 372484pf+0w
+#
+#   GBTIDL makes their index files in 51' (~3000") [99 plus a single big gbt.index]
+#   re-reading the index goes in about 2' (~120")  [the gbt.index file is 1GB]
+#
+#   Summing all these 99 fits files gives an idea of raw disk i/O speed:   8' (480")
+#   353.795u 79.827s 8:08.58 88.7%  0+0k 216053400+0io 1pf+0w
+#
+#   Testing done locally on fornax  Intel(R) Core(TM) i7-3930K CPU @ 3.20GHz  - nov 2019
+
 
 __doc__ = """
    List the sources in a series of SDFITS files.
@@ -35,4 +47,4 @@ for sdfits in sys.argv[1:]:
         date_1 = hdu[i].data[nrows-1]['DATE-OBS']
         srcs = hdu[i].data['OBJECT']
         srcu = uniq(srcs)
-        print("HDU-%d SINGLE DISH %d rows x %d chans   %s - %s   %s" % (i+1,nrows,nchan,date_0,date_1,repr(srcu)))
+        print("%s HDU-%d %d rows x %d chans   %s - %s   %s" % (sdfits,i+1,nrows,nchan,date_0,date_1,repr(srcu)))
