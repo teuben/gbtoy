@@ -1,0 +1,38 @@
+#! /usr/bin/env python
+
+__doc__ = """
+   List the sources in a series of SDFITS files.
+"""
+
+
+import os
+import sys
+import numpy as np
+from astropy.io import fits
+# -------------------------------------------------  deal with command line
+
+if len(sys.argv) == 1:
+    print("Usage: %s sdfitsfile" % sys.argv[0])
+    print(__doc__)
+    sys.exit(1)
+
+def uniq(seq):
+    """ from http://stackoverflow.com/questions/480214/how-do-you-remove-duplicates-from-a-list-in-python-whilst-preserving-order """
+    seen = set()
+    seen_add = seen.add
+    return [ x for x in seq if x not in seen and not seen_add(x)]
+
+    
+for sdfits in sys.argv[1:]:
+    hdu = fits.open(sdfits)
+
+    for i in range(1,len(hdu)):
+        header2 = hdu[i].header
+        nrows = header2['NAXIS2']
+        data2 = hdu[i].data
+        nchan = len(data2[0]['DATA'])
+        date_0 = hdu[i].data[0]['DATE-OBS']
+        date_1 = hdu[i].data[nrows-1]['DATE-OBS']
+        srcs = hdu[i].data['OBJECT']
+        srcu = uniq(srcs)
+        print("HDU-%d SINGLE DISH %d rows x %d chans   %s - %s   %s" % (i+1,nrows,nchan,date_0,date_1,repr(srcu)))
