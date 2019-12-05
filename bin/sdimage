@@ -17,7 +17,7 @@ from astropy.io import fits
 # -------------------------------------------------  deal with command line
 
 if len(sys.argv) == 1:
-    print("Usage: %s sdfitsfile" % sys.argv[0])
+    print("Usage: %s sdfitsfile [sourcename]" % sys.argv[0])
     print(__doc__)
     sys.exit(1)
 
@@ -25,6 +25,11 @@ sdfits=sys.argv[1]
 if not os.path.exists(sdfits):
     print("File does not exist: ",sdfits)
     sys.exit(1)
+
+src = None
+if len(sys.argv) > 2:
+    src = sys.argv[2]
+    print("Using src %s" % src)
 
 # -------------------------------------------------   script can start
 
@@ -248,10 +253,22 @@ for i in range(1,len(hdu)):
             if h not in h_sdfits:
                 print('UNKNOWN3: Ext header',h)
         print("HDU-%d SINGLE DISH %d rows x %d cols x %d chans" % (i+1,nrows,ncols,nchan))
-        data2 = np.zeros(nchan*nrows, dtype=np.float32).reshape(nrows,nchan)
         d = hdu[i].data
-        for j in range(nrows):
-            data2[j] = d[j]['DATA'].ravel()
+        if src == None:
+            rows = list(range(nrows))
+            nrows2 = nrows
+        else:
+            # recompute based on source name
+            rows = []
+            for j in range(nrows):
+                if d[j]['OBJECT'] == src:
+                    rows.append(j)
+            nrows2 = len(rows)                
+            print("HDU-%d finding %d rows for %s" % (i+1,nrows2,src))
+        data2 = np.zeros(nchan*nrows2, dtype=np.float32).reshape(nrows2,nchan)
+        for j2 in range(nrows2):
+            j = rows[j2]
+            data2[j2] = d[j]['DATA'].ravel()
         fname = sdfits.replace('.fits','_%d.fits' % (i+1))
     elif extname == 'MATRIX':
         # https://www.iram.fr/IRAMFR/GILDAS/doc/html/class-html/node84.html
@@ -289,9 +306,6 @@ for i in range(1,len(hdu)):
     else:
         print('%s is not a recognized extension for imaging - skipping' % extname)
         continue
-
-    if True:
-        print("another test here")   
 
     if False:
         # compute the stats for regression testing
