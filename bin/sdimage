@@ -223,38 +223,72 @@ for i in range(1,len(hdu)):
     header2 = hdu[i].header
     extname = header2['EXTNAME']    
     print("HDU-%d %s" % (i+1, extname))
-    if extname != 'SINGLE DISH':
-        print('%s is not a SINGLE DISH extension - skipping' % extname)
+    if extname == 'SINGLE DISH':
+        nrows = header2['NAXIS2']
+        ncols = header2['TFIELDS']
+        # check the keywords (some may be virtual columns)
+        for h in header2.keys():
+            if header2[h] == 'DATA':
+                h1 = h.replace('TTYPE','TFORM')
+                nchan = inta(header2[h1])
+            if h not in h_fits1:
+                if h in h_sdfits:
+                    print('SDFITS:  Ext header',h)
+                else:
+                    hd = first_digit(h)
+                    if hd < 0:
+                        print('UNKNOWN1: Ext header',h)
+                    elif h[:hd] not in h_fits2:
+                        print('UNKNOWN2: Ext header',h)            
+                    # no need to show the indexed keywords
+        # check the column names (via TTYPEnnn)
+        for j in range(ncols):
+            key = 'TTYPE%d' % (j+1)
+            h = header2[key]
+            if h not in h_sdfits:
+                print('UNKNOWN3: Ext header',h)
+        print("HDU-%d SINGLE DISH %d rows x %d cols x %d chans" % (i+1,nrows,ncols,nchan))
+        data2 = np.zeros(nchan*nrows, dtype=np.float32).reshape(nrows,nchan)
+        d = hdu[i].data
+        for j in range(nrows):
+            data2[j] = d[j]['DATA'].ravel()
+        fname = sdfits.replace('.fits','_%d.fits' % (i+1))
+    elif extname == 'MATRIX':
+        # https://www.iram.fr/IRAMFR/GILDAS/doc/html/class-html/node84.html
+        print("MATRIX extension not tested yet")
+        nrows = header2['NAXIS2']
+        ncols = header2['TFIELDS']
+        for h in header2.keys():
+            if header2[h] == 'SPECTRUM':
+                h1 = h.replace('TTYPE','TFORM')
+                nchan = inta(header2[h1])
+                # the MAXIS1 should be the same
+            if h not in h_fits1:
+                if h in h_sdfits:
+                    print('SDFITS:  Ext header',h)
+                else:
+                    hd = first_digit(h)
+                    if hd < 0:
+                        print('UNKNOWN1: Ext header',h)
+                    elif h[:hd] not in h_fits2:
+                        print('UNKNOWN2: Ext header',h)            
+                    # no need to show the indexed keywords
+        # check the column names (via TTYPEnnn)
+        for j in range(ncols):
+            key = 'TTYPE%d' % (j+1)
+            h = header2[key]
+            if h not in h_sdfits:
+                print('UNKNOWN3: Ext header',h)
+        print("HDU-%d MATRIX %d rows x %d cols x %d chans" % (i+1,nrows,ncols,nchan))
+        data2 = np.zeros(nchan*nrows, dtype=np.float32).reshape(nrows,nchan)
+        d = hdu[i].data
+        for j in range(nrows):
+            data2[j] = d[j]['SPECTRUM']
+        fname = sdfits.replace('.fits','_%d.fits' % (i+1))
+
+    else:
+        print('%s is not a recognized extension for imaging - skipping' % extname)
         continue
-    nrows = header2['NAXIS2']
-    ncols = header2['TFIELDS']
-    # check the keywords (some may be virtual columns)
-    for h in header2.keys():
-        if header2[h] == 'DATA':
-            h1 = h.replace('TTYPE','TFORM')
-            nchan = inta(header2[h1])
-        if h not in h_fits1:
-            if h in h_sdfits:
-                print('SDFITS:  Ext header',h)
-            else:
-                hd = first_digit(h)
-                if hd < 0:
-                    print('UNKNOWN1: Ext header',h)
-                elif h[:hd] not in h_fits2:
-                    print('UNKNOWN2: Ext header',h)            
-                # no need to show the indexed keywords
-    # check the column names (via TTYPEnnn)
-    for j in range(ncols):
-        key = 'TTYPE%d' % (j+1)
-        h = header2[key]
-        if h not in h_sdfits:
-            print('UNKNOWN3: Ext header',h)
-    print("HDU-%d SINGLE DISH %d rows x %d cols x %d chans" % (i+1,nrows,ncols,nchan))
-    data2 = np.zeros(nchan*nrows, dtype=np.float32).reshape(nrows,nchan)
-    d = hdu[i].data
-    for j in range(nrows):
-        data2[j] = d[j]['DATA']
-    fname = sdfits.replace('.fits','_%d.fits' % (i+1))
 
     if True:
         print("another test here")   
