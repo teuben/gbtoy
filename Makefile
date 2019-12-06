@@ -89,3 +89,10 @@ asap:
 
 asap-4.0.0:
 	svn co http://svn.atnf.csiro.au/asap/tags/asap-4.0.0
+
+lwa:
+	svn co http://fornax.phys.unm.edu/lwa/subversion lwa
+
+
+obit:
+	git clone  https://github.com/bill-cotton/Obit
