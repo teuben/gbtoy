@@ -1,7 +1,11 @@
 #! /usr/bin/env python
 #
+#
+#   Some benchmark notes
+#   --------------------
 #   Although not exactly the same, this routine summarizes the 99 EDGE fits files in 104GB in 4' (240")
-#   17.043u 12.084s 4:07.91 11.7%   0+0k 3962048+32io 372484pf+0w
+#   17.043u 12.084s 4:07.91 11.7%   0+0k 3962048+32io 372484pf+0
+#    7.572u  1.343s 0:10.38 85.8%   0+0k 0+32io 0pf+0w              (note how well it cached!!)
 #
 #   GBTIDL makes their index files in 51' (~3000") [99 plus a single big gbt.index]
 #   re-reading the index goes in about 2' (~120")  [the gbt.index file is 1GB]
@@ -13,7 +17,8 @@
 
 
 __doc__ = """
-   List the sources in a series of SDFITS files.
+   List the date-obs and source names in a (series of) SDFITS file(s).
+
 """
 
 
@@ -24,7 +29,7 @@ from astropy.io import fits
 # -------------------------------------------------  deal with command line
 
 if len(sys.argv) == 1:
-    print("Usage: %s sdfitsfile" % sys.argv[0])
+    print("Usage: %s sdfitsfile(s)" % sys.argv[0])
     print(__doc__)
     sys.exit(1)
 
