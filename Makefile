@@ -84,3 +84,8 @@ gbtidl:
 	wget https://sourceforge.net/projects/gbtidl/files/GBTIDL/2.10.1/gbtidl-2.10.1.tar.gz
 	tar zxf gbtidl-2.10.1.tar.gz
 
+asap:
+	svn co http://svn.atnf.csiro.au/asap
+
+asap-4.0.0:
+	svn co http://svn.atnf.csiro.au/asap/tags/asap-4.0.0
