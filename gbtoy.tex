@@ -84,12 +84,14 @@
 \begin{abstract}
 
 This is the full working document discussing the status of SD data analysis
-systems, focusing on updating the GBO system with a modern python3
-based eco-system. Supporting code and documentation can be found in
+systems.  Supporting code and documentation can be found in
 \url{https://github.com/teuben/gbtoy}.  Another shorter version of this
-can be found on overleaf, which is the GBO white paper (title TBD).
+can be found on overleaf, which is the GBO white paper released Dec 2019
+(title TBD).
 
 \end{abstract}
+
+\tableofcontents
 
 \section{Motivation and Scope}
 
@@ -1688,7 +1690,64 @@ write_ascii,'test35A.tab'
 we are still faced with the other shorter integration (3 scans) dataset. They should be combined to get a
 slightly better signal to noise.
 
-\subsection{Case study 3: ARGUS IC0342}
+\subsection{Case study 3: W3OH }
+
+This is a {\bf Frequency Switching} case, with the following data structure:
+$$
+    DATA(sig=2,cal=2,int=6,ifnum=2,pol=2; scan=5)
+$$
+    so a total of 480 rows. 
+
+\begin{verbatim}
+
+The first 96 rows (2 x 2 x 6 x 2 x 2) cycle through the sig,cal,ifnum,pol. This repeats for 5 scans.
+
+duratin = 2.5" but many scans have exposure 1.9 - 2.4"
+
+sdlist W3OH.fits DATE-OBS SIG  CAL SCAN SAMPLER FEED SRFEED|less
+
+A9 and A10 are XX    A9 is at 1663 MHz, A10 is at 1416 MHz, about 250 MHz different. (both labeled USB)
+A13 and A14 are YY   A13      1662      A14       1416
+
+
+These 4 at the same time  (sigOFF = ref   sigON = sig)
+sigOFF calON
+sigON  calON
+sigOFF sigOFF
+sigON  sigOFF
+
+6 integration are for the A9 sampler (1663 MHz) is XX - thus 24 rows
+6 more            for the A10 sampler (1416 MHz) is XX
+6 more in A13 (YY)
+6 more in A14 (YY)
+
+this is one scan, 96 rows.
+
+5 such scans exist, totalling 480 rows.
+
+DATA(sig=2, cal=2, int=6, ifnum=2, pol=2; scan=5)
+
+
+Each integration has 6 phases:
+  sigOFF calON
+  sigON  calON
+  sigOFF sigOFF
+  sigON  sigOFF
+The sigOff/sigOn differ by 5 MHz (the band is 50Mhz)
+
+Thus rows comes in these quads, and are otherwise structured as follows:
+  6 int of XX at 1663 MHz
+  6 int of XX at 1416 MHz
+  6 int of YY at 1663 MHz
+  6 int of YY at 1416 MHz
+This finishes one scan,thus in 96 rows.
+We have 5 scans in this.
+2005-06-28T04:10:20.00
+2005-06-28T04:16:17.81
+
+\end{verbatim}
+
+\subsection{Case study 4: ARGUS IC0342}
 
 ARGUS data (the 4 x 4 pixel multi-beam frontend for GBT) has been
 obtained for IC0342 (Li and Harris, 2017). These OTF data are structured very
