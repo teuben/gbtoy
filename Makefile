@@ -94,5 +94,5 @@ lwa:
 	svn co http://fornax.phys.unm.edu/lwa/subversion lwa
 
 
-obit:
-	git clone  https://github.com/bill-cotton/Obit
+obit: 
+	git clone  https://github.com/bill-cotton/Obit obit
