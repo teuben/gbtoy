@@ -1,0 +1,6 @@
+#! /bin/bash
+#
+#  merely a reminder that in NEMO there is the program sdinfo
+
+
+sdinfo $*
