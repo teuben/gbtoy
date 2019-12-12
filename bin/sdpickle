@@ -1,0 +1,79 @@
+#! /usr/bin/env python
+#
+#  3.3GB - takes  90" to make an info-pickle     real    14m14.648s // user    0m11.638s //  sys     1m29.988s
+#                0.5" to read an info-pickle
+
+__doc__ = """
+   Do some work on an SDFITS file, but store the expensive info in a pickle.
+   If the pickle is present, read that instead.
+   Simulates the ideas behind the .info file in gbdidl
+
+
+"""
+
+
+import os
+import sys
+import numpy as np
+from astropy.io import fits
+import pickle
+# -------------------------------------------------  deal with command line
+
+if len(sys.argv) == 1:
+    print("Usage: %s sdfitsfile key(s)" % sys.argv[0])
+    print(__doc__)
+    sys.exit(1)
+
+sdfits=sys.argv[1]
+if not os.path.exists(sdfits):
+    print("File does not exist: ",sdfits)
+    sys.exit(1)
+
+if len(sys.argv) == 2:
+    keys = None
+else:
+    keys = sys.argv[2:]
+    
+hdu = fits.open(sdfits)
+
+sdfits_info = sdfits + '.pickle'
+
+if os.path.exists(sdfits_info):
+    print("Reading %s" % sdfits_info)
+    info = pickle.load(open(sdfits_info,"rb"))
+    sys.exit(1)
+else:
+    info = {}
+    info['header0'] = hdu[0].header
+
+pkeys = ['DATE-OBS', 'OBJECT', 'SCAN', 'OBSMODE', 'FEED', 'PROCSEQN', 'SIG', 'CAL',
+         'SAMPLER', 'CRVAL1','CRVAL2','CRVAL3','CRVAL4','PLNUM','FDNUM','IFNUM',
+        ]
+
+# short-cut: only do the first BINTABLE
+for i in [1]:
+    header = hdu[i].header
+    data   = hdu[i].data
+    nrows  = header['NAXIS2']
+    ncols  = header['TFIELDS']
+    cols   = hdu[i].data.columns
+    
+    colnames = []
+    for j in range(len(cols)):
+        print(cols[j].name)
+        colnames.append(cols[j].name)
+            
+    info['sdfits'] = sdfits
+    info['header'] = header
+    info['nrows']  = nrows
+    info['ncols']  = ncols
+    info['cols']   = colnames
+    
+    for p in pkeys:
+        if p in colnames:
+            info[p] = hdu[i].data[:][p]
+        else:
+            print("Column %s missing" % p)
+
+print("Writing %s" % sdfits_info)
+pickle.dump(info, open(sdfits_info,"wb"))
