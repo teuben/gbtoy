@@ -14,6 +14,8 @@ __doc__ = """
 
    This code also attempts to "register' all known header variables (virtual as well as full)
    but it would be better to wrap this into a class in the final GBT eco system.
+
+   Optionally column names can be given, and their uniq values are reported.
 """
 
 
@@ -24,7 +26,7 @@ from astropy.io import fits
 # -------------------------------------------------  deal with command line
 
 if len(sys.argv) == 1:
-    print("Usage: %s sdfitsfile" % sys.argv[0])
+    print("Usage: %s sdfitsfile [cols]" % sys.argv[0])
     print(__doc__)
     sys.exit(1)
 
@@ -32,6 +34,8 @@ sdfits=sys.argv[1]
 if not os.path.exists(sdfits):
     print("File does not exist: ",sdfits)
     sys.exit(1)
+
+check_cols = sys.argv[2:]    
 
 # -------------------------------------------------   script can start
 
@@ -258,6 +262,9 @@ for i in range(1,len(hdu)):
                 elif h[:hd] not in h_fits2:
                     print('UNKNOWN2: Ext header',h)            
                 # no need to show the indexed keywords
+    for colname in check_cols:
+        colvals = hdu[i].data[:][colname]
+        print('%s: %s' % (colname,repr(list(np.unique(colvals)))))
     # check the column names (via TTYPEnnn)
     for j in range(ncols):
         key = 'TTYPE%d' % (j+1)
