@@ -1341,11 +1341,58 @@ $$
 
 In the case studies below we shall try and reproduce this, where possible, with our toy scripts.
 One thing to note is the weighting in case integrations are averaged. Normally weights are based on
+
 $$
-       \Delta\nu \Delta T T_{sys}^{-2}
+\Delta\nu \Delta T T_{sys}^{-2}
 $$
-       unless the {\tt /eqweight} option is given (and the documentation doesn't say this, but presumably
-       this only applies to the $T_{sys}$ portion of this equation.
+
+unless the {\tt /eqweight} option is given (and the documentation doesn't say this, but presumably
+this only applies to the $T_{sys}$ portion of this equation.
+
+Furthermore, in the discussion following eq.(2)
+
+$$
+T_a(\nu) = T_{sys}^{ref} \times {  {sig(\nu) - ref(\nu)} \over { ref(\nu) }}          \eqno(2)
+$$
+
+in Braatz(2009)\cite{braatz2009} the average is computed as follows:
+     
+$$
+sig = {1\over 2} (sig_{calon} + sig_{caloff}), ref = {1\over 2} (ref_{calon} + ref_{caloff}) \eqno(2a)
+$$
+
+whereas Teuben thought this would be the more logical one:
+$$
+T_{calon} =  T_{sys}^{ref} \times  {  {sig_{calon}(\nu) - ref_{calon}(\nu)} \over { ref_{calon}(\nu) }} \eqno(2b)
+$$
+$$
+T_{caloff} = T_{sys}^{ref} \times  {  {sig_{caloff}(\nu)- ref_{caloff}(\nu)} \over { ref_{caloff}(\nu) }} \eqno(2c)
+$$
+$$
+T_a(\nu) = {1\over 2} (T_{calon} + T_{caloff})  \eqno(2d)
+$$
+
+\begin{verbatim}
+
+If you write (S=sky  G=galaxy  N=noise)
+   sig_calon   = S + G + N
+   sig_caloff  = S + G
+   ref_calon   = S     + N
+   ref_caloff  = S
+
+Braatz:    G / (S + N/2)
+
+Teuben:    G / (1/S + 1/(S+N))/2
+
+and their ratio
+
+           T/B = 1 + N/S
+
+which is about 8% (ngc5291)
+
+\end{verbatim}
+
+       
 
 \subsection{Case study 1: Classic ngc5291}
 
@@ -1759,8 +1806,8 @@ edges of the field where no emission is assumed (typically the first and last 10
 First, each observation comes in 8 SDFITS
 files, something akin to the EDGE data we discussed, and labeled A..H,
 e.g. {\tt AGBT17B\_151\_01.raw.vegas.A.fits}. This is purely because the VEGAS backend
-was used, but in the case of ARGUS each file is not a different IF, but two different
-beams (pointings) of ARGUS.  More Details below.
+was used, but in the case of ARGUS each file is not a different IF, as we saw with EDGE,
+but two different beams (pointings) of ARGUS.  More Details below.
 
 \bigskip
 This data is of sufficient complexity w.r.t. GBTIDL that it is futile to try and reproduce it,
@@ -1818,8 +1865,10 @@ Each of the A..H SDFITS files has 15792 rows.
 
 Here we summarize again the DATA structure associated with the studied
 SDFITS files. Here we also add a semi-colon in the dimension after
-which time will increase. These are typically when a new scan
-begins, either with or without a associated PROCSEQN (proc) sequence.
+which time will increase for all dimensions. These are typically when a new scan
+begins, either with or without a associated PROCSEQN (proc) sequence. The
+exception is NGC2347, where each ``if'' repeats the time sequence, partially
+because it's in a separate SDFITS file.
 
 
 Let us stress again, this is {\bf not} a data structure used anywhere
@@ -1838,7 +1887,7 @@ FS  W3OH        DATA(sig,cal,int,ifnum,pol; scan)            480   46   16384
 NOD IC1481      DATA(cal,int,pol,sampler; proc,scan)         512   46    8192
                      2   4   2   4        2    4
 
-TP  NGC2347     DATA(cal,pol,int; scan,if)                  8560   70   32768  (x 3 x 2)
+TP  NGC2347     DATA(cal,pol,int; scan;if)                  8560   70   32768  (x 3 x 2)
                      2   2   41   9    3
 
 OTF IC0342      DATA(sampler,int; scan)                    15792   74    1024  (x 8)
@@ -1847,6 +1896,7 @@ OTF IC0342      DATA(sampler,int; scan)                    15792   74    1024  (
 \end{verbatim}
 \normalsize
 
+\newpage
 \section{Software}
 
 The following software has been discussed in this paper (where available, we use their ASCL id for reference):
