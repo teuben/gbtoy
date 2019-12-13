@@ -1382,11 +1382,11 @@ If you write (S=sky  G=galaxy  N=noise)
 
 Braatz:    G / (S + N/2)
 
-Teuben:    G / (1/S + 1/(S+N))/2
+Teuben:    (G/S + G/(S_N) )/2
 
 and their ratio
 
-           T/B = 1 + N/S
+           T/B ~ 1 - (N/S)^2
 
 which is about 8% (ngc5291)
 
@@ -1610,7 +1610,7 @@ particular galaxy was observed twice, separated by 5 days. For each
 respective VEGAS banks. These
 turn out to be different IF settings, with a bandwidth of 100 MHz
 each, shifted by only 25MHz between the files, so in total we have 150
-MHz, which is around 15,000 km/s, covering the entire EDGE survey.
+MHz, which is around 30,000 km/s, covering the entire EDGE survey.
 
 Each SDFITS file contains several EDGE galaxies in {\tt Track}
 mode, to be processed with GBTIDL's {\tt setsigref} procedure,
