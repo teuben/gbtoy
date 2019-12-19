@@ -29,7 +29,8 @@ for k in keys:
 fmt = fmt + " | awk '{print $2,$3}' | sort | uniq -c"
 
 for sdfits in sys.argv[1:]:
-    print("File: %s " % sdfits)
+    cmd = 'ls -sF %s' % sdfits
+    os.system(cmd)
     cmd = fmt % sdfits
     os.system(cmd)
     
