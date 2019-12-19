@@ -1,0 +1,35 @@
+#! /usr/bin/env python
+
+__doc__ = """
+   Summarize a set of SDFITS files based on the unique combination of a few selected fields.
+
+   See also sdlist, e.g.
+
+   sdlist ngc5291.fits  OBJECT OBSMODE | awk '{print $2,$3}' | sort | uniq -c
+
+"""
+
+
+import os
+import sys
+import numpy as np
+from astropy.io import fits
+# -------------------------------------------------  deal with command line
+
+if len(sys.argv) == 1:
+    print("Usage: %s sdfitsfile(s)" % sys.argv[0])
+    print(__doc__)
+    sys.exit(1)
+
+keys = ['OBJECT',  'OBSMODE']
+
+fmt = "sdlist %s "
+for k in keys:
+    fmt = fmt + k + " "
+fmt = fmt + " | awk '{print $2,$3}' | sort | uniq -c"
+
+for sdfits in sys.argv[1:]:
+    print("File: %s " % sdfits)
+    cmd = fmt % sdfits
+    os.system(cmd)
+    
