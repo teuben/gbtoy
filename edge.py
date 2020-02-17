@@ -1,11 +1,15 @@
 # Example gbtoy python version of edge.pro
 # Formerly called reduce_15b287.pro by Tony Wong
+#
+# The data are taken in repeated scans of {On/Off/On},
+# thus each triplet gives two calibrated spectra
+#
 
 def edge(start_scan, stop_scan, ifnum=1, plnum=[0,1]):
     """  for total power tracks for EDGE survey
     """
     scanlist = g.range(start_scan, stop_scan)
-    nscans = len(scanlist)
+    nscans = len(scanlist) 
 
     g.sclear()
 
