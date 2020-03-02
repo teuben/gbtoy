@@ -181,6 +181,9 @@ class Spectrum(object):
     def baseline(self, degree=2, chans=None, replace=False):
         """
         example      chans=[(1000,2000),(5000,6000)]
+        Reminder: in gbtidl 'bshape' plots the baseline
+                            'baseline' subtracts it
+                  here we have replace=True/False for that.
         """
         poly = models.Polynomial1D(degree=degree)
         fit = fitting.LinearLSQFitter()
@@ -235,7 +238,7 @@ class SDFITSLoad(object):
     container for a bintable from a selected HDU
     normally not used by users
     """
-    def __init__(self, filename, src=None, hdu=1):
+    def __init__(self, filename, src=None, rows=None, hdu=1):
         """
         """
         print("==SDFITSLoad %s" % filename)
@@ -243,10 +246,11 @@ class SDFITSLoad(object):
         self.bintable = None
         self.hdu = fits.open(filename)      # when to close?
         self.header = self.hdu[0].header
-        self.load(src,hdu)
-    def load(self, src=None, hdu=1):
+        self.load(src,rows,hdu)
+    def load(self, src, rows, hdu):
         """
         for given hdu make this bintable available
+        rows = [first,last]
         """
         self.bintable = self.hdu[hdu]
         self.header2  = self.bintable.header
@@ -279,8 +283,10 @@ class SDFITSLoad(object):
     def __len__(self):
         return self.nrows
     
-    def summary(self):
-        print("WIP")
+    def summary(self, vars=['SCAN', 'OBJECT']):
+        print("summary")
+        scan = np.unique(self.data2[:]['SCAN'])
+        srcs = np.unique(self.data2[:]['OBJECT'])
         
 
 # # GBTLoad
@@ -329,7 +335,7 @@ class GBTLoad(object):
         show Mean,RMS,Min,Max
         """
         for i in range(self.nrows):
-            self.sp[i].stats(chans,label="%04d" % i)
+            self.sp[i].stats(chans,label="%d" % i)
     def debug(self, vars):
         """
         show some meta data variables
