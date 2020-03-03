@@ -1,5 +1,11 @@
 #! /usr/bin/env python
 #
+#
+#    experiments to see how to read a large SDFITS file and trim it in size
+#    and free memory of the original unwanted rows
+#
+#    At the current state it's a mess. I can't get it to clear memory
+#
 
 import numpy as np
 from astropy.io import fits
@@ -61,12 +67,15 @@ if False:
     pause('hdu.close()-1')
 
 
+# each row is about 17k (NAXIS1)
+# yet, each deepcopy of a row allocates 22MB
 
 # is this the horror we need to do ???
 data3 = np.empty(nrows, dtype=type(data2[0]))
 pause('data3-begin %d' % nrows,0.0)
 for i in range(nrows):
-    data3[i] = data2[i]    # a deepcopy goes too deep and trashes memory
+    data3[i] = copy.copy(data2[i])    # copy.deepcopy goes too deep and trashes memory
+                                      # copy.copy doesn't seem to work at all, has references
 pause('data3-end',0.0)
 pause('nrows=%d' % nrows)
 
