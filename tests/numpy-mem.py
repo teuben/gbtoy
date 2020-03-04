@@ -80,6 +80,8 @@ def my_main():
     print(a1)
     print(a2)
     pause('The a=a1=a2=0 with print()')
+
+    del(a3)
     
     pause('END')
 
