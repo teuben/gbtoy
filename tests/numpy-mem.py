@@ -1,5 +1,8 @@
 #! /usr/bin/env python
+#
 # allocate a big array, so we can see it in top
+# watch the memory come and go
+# 
 
 import numpy as np
 import copy
@@ -7,6 +10,9 @@ import time
 import psutil
 from memory_profiler import profile
 
+import os
+import psutil         
+process=psutil.Process(os.getpid())
 
 def pause(msg, delta=0):
     if delta==0: return
@@ -49,6 +55,9 @@ def my_main():
     a2 = a[:]
     pause('Third a,a1,a2')
 
+    # here's the catch: in ipython just saying 'a1' will place a reference
+    # to the array in the ipython history. This creates a memory orphan
+    # use print(a1) instead !!!
     a=0          
     a1
     a1=0
@@ -85,5 +94,8 @@ def my_main():
     
     pause('END')
 
-
+mem0 = process.memory_info().rss/1024/1024
 my_main()
+mem1 = process.memory_info().rss/1024/1024
+print("Before:",mem0)
+print("After :",mem1)
