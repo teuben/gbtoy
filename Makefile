@@ -96,3 +96,8 @@ lwa:
 
 obit: 
 	git clone  https://github.com/bill-cotton/Obit obit
+
+asdf:
+	git clone https://github.com/spacetelescope/asdf
+	(cd asdf; git submodule update --init; pip install -e .)
+
