@@ -1,59 +1,55 @@
 #! /bin/csh -f
 #
-#  Install an anaconda3 python for GBT work.
+#  Install an anaconda3 (or miniconda3) python. A full install takes about 2 mins,
+#  assuming you have the .sh file
 #
-#  This is optional, you can also try to install packages via conda virtual environments
-#  or likewise operations. Be sure it's python3 though, as we will only support python3.
+#  An alternative is to set up a special conda environment for NEMO, e.g.
 #
-#  TBD: despite what it might say at moment below, it is adviced to install packages
-#  using the "pip install -e" method, since we are likely to hack in them.
-#  Certainly do not use "python setup.py".
+#     conda create -n nemo1 python=x.x -y
+#     source activate nemo1
+#     conda install -n nemo1 [package]
+#     source deactivate
+#     conda remove -n nemo1 -all
 #
+#  but this has not been experimented with.
+#
+#  May-2020        os=Linux/MacOSX
+#  Nov-2020        for lmtoy
 
-            # ~670MB
-set mc3   = https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh
-set msh   = $mc3:t
+set url   = https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+set url   = https://repo.anaconda.com/archive/Anaconda3-2020.07-MacOSX-x86_64.sh
+set url   = https://repo.anaconda.com/archive/Anaconda3-2020.07-Linux-x86_64.sh
+set url   = https://repo.anaconda.com/archive/Anaconda3-2020.11-%s-x86_64.sh
+set url   = https://repo.anaconda.com/archive/Anaconda3-2021.04-%s-x86_64.sh
+#set url   = https://repo.anaconda.com/archive/Anaconda3-2021.11-%s-x86_64.sh      # sphinx
+
 set dir   = `pwd`/anaconda3
-set e     = 0
+set wget  = wget
+set os    = `uname -s`
 
 # you better know what you are doing here
 foreach arg ($*)
   set $arg
 end
 
-if (-d anaconda3) then
-  echo "anaconda3 is already installed. Remove this directory if you want to refresh it,"
-  echo "or 'make conda' to update it"
-  exit 0
-endif
+if ($os == Darwin) set os = MacOSX
 
-if ($e == 0) then
-   set eopt = ()
-else
-   set eopt = (-e)
-endif   
+set mc3 = `printf $url $os`
+set msh = $mc3:t
 
-if (! -e $msh) wget $mc3
+$wget $mc3
 bash $msh -b -p $dir
 
 setenv PATH "$dir/bin:$PATH"
 
 conda update -y conda
-pip install --upgrade pip
+pip3 install --upgrade pip
 
+# write the source-able shell startup files
 
 echo "set path = ($dir/bin "'$path); rehash'  >> python_start.csh
 echo "export PATH=${dir}/bin:"'$PATH'         >> python_start.sh
 
-# if your installed (some of these) via the Makefile, you will get them
-# installed from source. Consider using the -e option
-pip install $eopt specutils
-pip install $eopt pyspeckit
-
-# general things we need
-pip install blessings     # for gbt-pipeline
+echo "Created python_start.[c]sh files for you"
 
 
-# Optional things, arguably useful for hacking, commented out for sanity?
-
-# conda install glueviz
