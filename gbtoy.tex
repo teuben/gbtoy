@@ -78,16 +78,19 @@
 
 % as of version 0.6 we are in overleaf
 % version 0.8 is back in gbtoy
-\centerline{Version 0.8 - \today}
+\centerline{Version 1.1 - \today}
 \bigskip
 
 \begin{abstract}
 
-This is the full working document discussing the status of SD data analysis
+This is the working document discussing the status of SD data analysis
 systems.  Supporting code and documentation can be found in
 \url{https://github.com/teuben/gbtoy}.  Another shorter version of this
 can be found on overleaf, which is the GBO white paper released Dec 2019
 (title TBD).
+
+Additional notes were added during the {\tt dysh} development, merely
+as a placeholder before going in non-latex documents.
 
 \end{abstract}
 
@@ -1392,6 +1395,10 @@ which is about 8% (ngc5291)
 
 \end{verbatim}
 
+\subsection{Calibration - FS}
+
+In Frequency Switching calibration the ON and OFF are also referred to as SIG and REF. These two states place the
+spectral line of interest in two different pieces of the band, 
        
 
 \subsection{Case study 1: Classic ngc5291}
@@ -1965,7 +1972,7 @@ The following samplings of code and scripts you may now find scatterred in {\tt 
 
 Two datasets have come out that are useful for benchmarking:
 
-\subsection{ngc5271.fits}
+\subsection{ngc5291.fits}
 
 This is the PS data Example 1 in the GBTIDL manual. ``easy'' to understand. Raw data. 352 rows.  Used with a simple {\tt filein} command.
 
